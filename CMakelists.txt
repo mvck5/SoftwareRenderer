@@ -1,0 +1,65 @@
+cmake_minimum_required(VERSION 3.20)
+
+set(CMAKE_CXX_STANDARD 20)
+
+#-----------------------------------------------------------------
+#set this to ON instead of OFF to ship
+set(PRODUCTION_BUILD OFF CACHE BOOL "Make this a production build" FORCE)
+#basically this will change the RESOURCES_PATH to be the local path
+#-----------------------------------------------------------------
+
+
+#ensures static linking of the runtime library to ensure compatability
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+
+if(PRODUCTION_BUILD)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) #link time optimization
+else()
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
+endif()
+
+
+if(MSVC)
+add_compile_options(/arch:AVX2) #make sure SIMD optimizations take place
+endif()
+
+project(main1)
+
+#-----------------------------------------------------------------library
+#add_subdirectory(external/)  generic external library include
+#---------                  SDL library                  ---------
+set(DSDL_STATIC ON CACHE BOOL "Build SDL statically" FORCE)
+set(DSDL_SHARED OFF CACHE BOOL "Build SDL dynamically" FORCE)
+add_subdirectory(external/SDL ) #EXCLUDE_FROM_ALL if you don't want to rebuild SDL
+#-----------------------------------------------------------------
+
+#MY_SOURCES is a list of all source files in the project so we don't have to add them manually
+file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+
+add_executable(main1 "${MY_SOURCES}")
+
+
+if(PRODUCTION_BUILD)
+	# setup the ASSETS_PATH macro to be in the root folder of the exe
+	target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="./resources/") 
+else()
+	# This is useful to get an ASSETS_PATH in the IDE during development
+	target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/")
+endif()
+
+
+if(MSVC) # If using the VS compiler...
+
+	target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC _CRT_SECURE_NO_WARNINGS) # turns of warning about "secure functions"
+
+	#set_target_properties("${CMAKE_PROJECT_NAME}" PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
+
+endif()
+
+
+#includes all header files in *include* file
+target_include_directories(main1 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
+
+#external library
+target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE SDL3::SDL3) #external libraries linker
