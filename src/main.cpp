@@ -1,6 +1,6 @@
 #include <SDL3/SDL.h>
 #include <iostream>
-#include "renderer.h"
+#include "rasteriser.h"
 #include "colour.h"
 
 constexpr int WIDTH = 1280;
@@ -65,7 +65,7 @@ int main()
     }
 
     // Our actual software-renderer.
-    Renderer rend(WIDTH,HEIGHT);
+    Rasteriser rend(WIDTH,HEIGHT);
 
 
     bool running = true;
@@ -91,19 +91,19 @@ int main()
         {
             for (int x = 0; x < rend.getWidth(); ++x)
             {
-                rend.getBuffer()[y * rend.getWidth() + x] = colours::back;
+                rend.getBuffer()[y * rend.getWidth() + x] = colours::black;
             }
         }
 
         // Draw a red pixel.
-        rend.putPixel(100, 100, colours::red);
+        rend.drawPixel(100, 100, colours::red);
 
         // Example rectangle.
         for (int y = 200; y < 400; ++y)
         {
             for (int x = 300; x < 600; ++x)
             {
-                rend.putPixel(x, y, colours::green);
+                rend.drawPixel(x, y, colours::green);
             }
         }
 

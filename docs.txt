@@ -1,0 +1,102 @@
+----Local Space----
+the objects independant coordinates	relative to it's own origin
+
+----World Space----
+the global coordinates of the whole scene
+vertex position relative to the "world" origin
+world origin is (0,0,0)
+
+
+----View Space----
+the scene viewed from the perspective of the camera
+
+
+----Clip Space----
+viewing frustrum from "camera" which contains some "canvas"
+
+frustrum extends from camera point to meet at the canvas's 4 corners and then extends 
+until some "end" is reached where end is defined as a distance
+
+if an object is within the frustrum it can be translated to clip space
+
+line from position of objects vertex to camera
+
+where line intersects with canvas is the clip space of the vertex
+
+the "projected" coordinate of the vertex can be found with p.x = x/z (same goes for y)
+where z is the "depth" coordinate
+
+the "projected" coordinate can be translated to clip space if it's within the range of the canvas
+example: the canvas's range for x is -1<x<1 and the projected coordinate's x value is 0.5,
+as such it's within the canvas's range and can be translated to clip space
+
+If the projected coordinate is not within the canvas's range then the line does not intersect
+with the canvas, the vertex is not within the frustrum, and cannot be translated
+
+
+----Screen Space/Normalized Device Coordinates----
+normalise clip space coordinates to be in the range 0-1 such as to be
+applicable across any window size
+
+
+----Left hand vs right hand coordinates----
+negate x(or z) value to switch hand, this also inverts the normal
+the normal is therefore opposite between hands or the image is opposite but not both
+
+Our coordinate system will be right handed, and matrices will be in column-major order
+
+
+----General process----
+Local space -> (model matrix) World space -> (view matrix) View space -> (projection matrix) Clip space -> (normalise coords) Screen space
+
+
+
+
+----Matrices----
+
+scaling matrix:
+Tx	0	0	0
+0	Ty	0	0 
+0	0	Tz	0
+0	0	0	1
+
+where Tx,Ty,Tz are scalars for some vector multiplication
+
+
+rotation matrices:
+
+-rotate about x
+1			0			0			0
+0			cos			-sin		0 
+0			sin			cos			0
+0			0			0			1
+
+-rotate about y
+cos			0			0			sin
+0			1			0			0 
+0			0			1			0
+-sin		0			0			cos
+
+-rotate about z
+cos			-sin		0			0
+sin			cos			0			0 
+0			0			1			0
+0			0			0			1
+
+-rotation around axis u = (x,y,z) (this mostly solves gimble lock although to fully solve it quaternions should be used)
+x^2(1-cos)+cos				xy(1-cos)-zsin				xz(1-cos)+ysin				0
+xy(1-cos)+zsin				y^2(1-cos)+cos				yz(1-cos)-xsin				0 
+xz(1-cos)-ysin				yz(1-cos)+xsin				z^2(1-cos)+cos				0
+0							0							0							1
+
+where u is some unit vector
+
+
+translation matrix:
+
+1	0	0	Tx
+0	1	0	Ty 
+0	0	1	Tz
+0	0	0	1
+
+where Tx,Ty,Tz are translations for their respective coordinates
