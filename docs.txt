@@ -49,21 +49,31 @@ Our coordinate system will be right handed, and matrices will be in column-major
 ----General process----
 Local space -> (model matrix) World space -> (view matrix) View space -> (projection matrix) Clip space -> (normalise coords) Screen space
 
+clip vector = projection matrix * view matrix * model matrix * local vector 
+
+we divide the coords by w in the "project" vector function so we don't need to do it in clip space
+
+we actually end up with normalised device coordinates between -1<x<1 after the "project" vector function
+
+the model matrix and the view matrix can be multiplied together, but the resulting vector should then be projected on,
+as it's more efficient to only have to calculate the w and thus a 4x4 matrix once, where as the other affine transformations
+can be left as 3x3 transformations
+
 
 
 
 ----Matrices----
 
-scaling matrix:
+Scaling matrix:
 Tx	0	0	0
 0	Ty	0	0 
 0	0	Tz	0
 0	0	0	1
 
-where Tx,Ty,Tz are scalars for some vector multiplication
+where: Tx,Ty,Tz are scalars for some vector multiplication
 
 
-rotation matrices:
+Rotation matrices:
 
 -rotate about x
 1			0			0			0
@@ -89,14 +99,42 @@ xy(1-cos)+zsin				y^2(1-cos)+cos				yz(1-cos)-xsin				0
 xz(1-cos)-ysin				yz(1-cos)+xsin				z^2(1-cos)+cos				0
 0							0							0							1
 
-where u is some unit vector
+where: u is some unit vector
 
 
-translation matrix:
+Translation matrix:
 
 1	0	0	Tx
 0	1	0	Ty 
 0	0	1	Tz
 0	0	0	1
 
-where Tx,Ty,Tz are translations for their respective coordinates
+where: Tx,Ty,Tz are translations for their respective coordinates
+
+
+Projection matrix:
+
+f/a				0				0				0
+0				f				0				0
+0				0				(fn+ff)/(fn-ff) (2*fn*ff)/(fn-ff)
+0				0				-1				0
+
+where: f is 1/(tan(fov/2)), a is the aspect ratio, fn is the near cutoff, ff is the far cutoff
+
+
+
+
+
+
+----Optimisations to implement----
+-SIMD(single instruction multiple data) 
+-Parallelise so as not to run on a single thread, multithreading
+-back face culling
+-frustrum culling
+-occlusion culling
+-Tiling(divide screen into smaller blocks to keep data in cache)
+-incremental edge functions
+-depth pre pass????????
+-BVH(bounding volume hierarchy)
+
+-change matrix rotation to use quaternions
