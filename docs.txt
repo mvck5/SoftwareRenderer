@@ -59,6 +59,7 @@ the model matrix and the view matrix can be multiplied together, but the resulti
 as it's more efficient to only have to calculate the w and thus a 4x4 matrix once, where as the other affine transformations
 can be left as 3x3 transformations
 
+local vector * model matrix, then * view matrix, then * projection matrix
 
 
 

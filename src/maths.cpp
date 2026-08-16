@@ -187,7 +187,7 @@ namespace Maths {
 
 		vec.normalise();
 
-		(*this) = (*this) * Mat4({
+		(*this) = Mat4({
 			(vec(0) * vec(0))* (1 - std::cos(angle)) + std::cos(angle),
 			(vec(0) * vec(1))* (1 - std::cos(angle)) - (vec(2) * std::cos(angle)),
 			(vec(0) * vec(2))* (1 - std::cos(angle)) + (vec(1) * std::cos(angle)),
@@ -204,50 +204,57 @@ namespace Maths {
 			0,
 			0,
 			1
-			});
+			}) * (*this);
 	}
 
 	void Mat4::scale(Vec3 vec) {
-		(*this) = (*this) * Mat4({
+		(*this) = Mat4({
 			vec(0),0,0,0,
 			0,vec(1),0,0,
 			0,0,vec(2),0,
 			0,0,0,1 
-			});
+			}) * (*this);
 	}
 
 	void Mat4::translate(Vec3 vec) {
-		(*this) = (*this) * Mat4({ 
+		(*this) = Mat4({
 			1,0,0,vec(0),
 			0,1,0,vec(1),
 			0,0,1,vec(2),
 			0,0,0,1 
-			});
+			}) * (*this);
 	}
 
-	void Mat4::project(double fov, double aspectRatio, double near, double far) { // the projection matrix contains a vast amount of 0 so can be optimised like this althought it's ugly
+
+	
+	// the projection matrix doesn't use * as * is definied for affine transformations as an optimisation
+	void Mat4::project(double fov, double aspectRatio, double near, double far) { 
 
 		double f = 1 / (std::tan(fov / 2));
+		double depth = near - far;
 
-		m_arr[0][0] = m_arr[0][0] * (f / aspectRatio);
-		m_arr[0][1] = m_arr[0][1] * (f);
-		m_arr[0][2] = m_arr[0][2] * ((near + far) / (near - far))  + m_arr[0][3] * (-1);
-		m_arr[0][3] = m_arr[0][2] * ((2 * near * far) / (near-far));
-
-		m_arr[1][0] = m_arr[1][0] * (f / aspectRatio);
-		m_arr[1][1] = m_arr[1][1] * (f);
-		m_arr[1][2] = m_arr[1][2] * ((near + far) / (near - far)) + m_arr[1][3] * (-1);
-		m_arr[1][3] = m_arr[1][2] * ((2 * near * far) / (near - far));
-
-		m_arr[2][0] = m_arr[2][0] * (f / aspectRatio) ;
-		m_arr[2][1] = m_arr[2][1] * (f);
-		m_arr[2][2] = m_arr[2][2] * ((near + far) / (near - far)) + m_arr[2][3] * (-1);
-		m_arr[2][3] = m_arr[2][2] * ((2 * near * far) / (near - far));
-
-		m_arr[3][0] = m_arr[3][0] * (f / aspectRatio);
-		m_arr[3][1] = m_arr[3][1] * (f);
-		m_arr[3][2] = m_arr[3][2] * ((near + far) / (near - far)) + m_arr[3][3] * (-1);
-		m_arr[3][3] = m_arr[3][2] * ((2 * near * far) / (near - far));
+		//it is more efficient to store 4 values and immediatley change the values in the matrix, rather than store the whole matrix
+		std::array<double, 4> arr{m_arr[2][0], m_arr[2][1], m_arr[2][2], m_arr[2][3]}; 
+	
+		m_arr[0][0] = (f / aspectRatio) * m_arr[0][0];
+		m_arr[0][1] = (f / aspectRatio) * m_arr[0][1];
+		m_arr[0][2] = (f / aspectRatio) * m_arr[0][2];
+		m_arr[0][3] = (f / aspectRatio) * m_arr[0][3];
+	
+		m_arr[1][0] = f * m_arr[1][0];
+		m_arr[1][1] = f * m_arr[1][1];
+		m_arr[1][2] = f * m_arr[1][2];
+		m_arr[1][3] = f * m_arr[1][3];
+	
+		m_arr[2][0] = (near + far) / (depth) * m_arr[2][0] + (2 * near * far) / (depth) * m_arr[3][0];
+		m_arr[2][1] = (near + far) / (depth) * m_arr[2][1] + (2 * near * far) / (depth) * m_arr[3][1];
+		m_arr[2][2] = (near + far) / (depth) * m_arr[2][2] + (2 * near * far) / (depth) * m_arr[3][2];
+		m_arr[2][3] = (near + far) / (depth) * m_arr[2][3] + (2 * near * far) / (depth) * m_arr[3][3];
+	
+		m_arr[3][0] = -1 * arr[0];
+		m_arr[3][1] = -1 * arr[1];
+		m_arr[3][2] = -1 * arr[2];
+		m_arr[3][3] = -1 * arr[3];
 	}
 
 }
