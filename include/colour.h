@@ -2,7 +2,7 @@
 //0x00   00   00     00
 //alpha, red, green, blue
 
-namespace colours {
+namespace Colours {
     inline constexpr std::uint32_t red{ 0xFFFF0000 };
     inline constexpr std::uint32_t green{ 0xFF00FF00 };
     inline constexpr std::uint32_t blue{ 0xFF0000FF };

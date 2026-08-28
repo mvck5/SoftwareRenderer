@@ -1,17 +1,25 @@
 ----Local Space----
-the objects independant coordinates	relative to it's own origin
+the objects vertices coordinates relative to it's own origin
 
-----World Space----
+the origin is arbituary but usually at the "centre" of the object
+
+
+----World Space---- (model matrix)
 the global coordinates of the whole scene
+
 vertex position relative to the "world" origin
 world origin is (0,0,0)
 
+the object's position in space, as well as it's scale and rotation are stored in the model matrix
 
-----View Space----
+
+----View Space---- (view matrix)
 the scene viewed from the perspective of the camera
 
+we transform an object's position in "world" space to "view" space via the view matrix
 
-----Clip Space----
+	
+----Clip/Screen Space---- (projection matrix)
 viewing frustrum from "camera" which contains some "canvas"
 
 frustrum extends from camera point to meet at the canvas's 4 corners and then extends 
@@ -34,9 +42,17 @@ If the projected coordinate is not within the canvas's range then the line does 
 with the canvas, the vertex is not within the frustrum, and cannot be translated
 
 
-----Screen Space/Normalized Device Coordinates----
-normalise clip space coordinates to be in the range 0-1 such as to be
+----Normalized Device Coordinates----
+normalise clip space x,y coordinates to be in the range 0-1 such as to be
 applicable across any window size
+
+
+----Raster Space----
+change coordinates to be integers within the size of the screen
+example: 1920x1080
+
+we would also sort through "depth" before drawing in order to solve the visibility problem,
+one solution is a z buffer
 
 
 ----Left hand vs right hand coordinates----
@@ -44,6 +60,8 @@ negate x(or z) value to switch hand, this also inverts the normal
 the normal is therefore opposite between hands or the image is opposite but not both
 
 Our coordinate system will be right handed, and matrices will be in column-major order
+
+
 
 
 ----General process----
@@ -61,6 +79,22 @@ can be left as 3x3 transformations
 
 local vector * model matrix, then * view matrix, then * projection matrix
 
+we then transform the vector into raster coordinates(example: -1,1 to 0,1080) (float/double to int)
+
+pixel in framebuffer is changed to the closest raster coordinate (decided by the depthbuffer)
+
+repeat for all pixels, pass framebuffer to window and draw
+
+///////////////// we don't technically transform the object's vertices, we transform the object's local coordinate system(with a matrix) in world space
+(this is also true for view space and projection space), although in practice we translate each individual vertex
+
+model matrix is really the "local to world" matrix
+
+view matrix is really the "world to camera" matrix 
+(or the inverse of the camera to world matrix, which in this case can be calculated using the transpose)
+
+once everything is in raster coordinates, we apply the rasterisation algorithm between points to draw lines, then triangles
+(or just lines if it's wireframe)
 
 
 ----Matrices----
@@ -125,17 +159,60 @@ where: f is 1/(tan(fov/2)), a is the aspect ratio, fn is the near cutoff, ff is 
 
 
 
+----Things to fix----
+
+-rename edgeFunction, as it really calculates an area
+
+
+
+
+----Features to implement----
+
+-fps counter
+
+-outlines around objects(or around their triangles)
+
+-normals(inverse for non orthognal transformations, which occur with non uniform scaling)
+this will likely also mean we can't use a "winding agnostic" method of filling in triangles
+and have to enforce it to being either clockwise or anticlockwise
+
+-List of objects in the "rasteriser" class, draw each object per frame
+likely frustrum culling would be implemented here
+
+-object class/rasteriser object list delete function
+
+-obj loader(we need to be able to display textures/uv maps and link verteces together, for now ignore materials)
+
+-shading/shaders(at the very least some form of diffuse and specular lighting)
+
+-possibly change the z-buffer to a-buffer so we can display non opaque objects such as windows
 
 
 ----Optimisations to implement----
+
+-optimise the barycentric coordinate calculations
+we currently do (l.1 x v1 + l.2 x v2 + l.3 x v3) where l.1 + l.2 + l.3 = 1
+but this can be optimised to 2 additions and 2 multiplications
+
+-use more optimised line drawing algorithm
+right now it uses more memory than needed, plus uses interpolation so floating point arithmetic which is slow
+possibly use "Bresenham’s Algorithm" instead
+
+-stopping repeat lines from triangles that share two points from being drawn (example, the middle line of a square made of two triangles)
+
 -SIMD(single instruction multiple data) 
--Parallelise so as not to run on a single thread, multithreading
--back face culling
--frustrum culling
--occlusion culling
+
+-multithreading
+
+-various culling techniques: back face, frustrum, occlusion
+
 -Tiling(divide screen into smaller blocks to keep data in cache)
+
 -incremental edge functions
--depth pre pass????????
--BVH(bounding volume hierarchy)
 
 -change matrix rotation to use quaternions
+
+-depth pre pass????????
+
+-BVH(bounding volume hierarchy)????????
+
