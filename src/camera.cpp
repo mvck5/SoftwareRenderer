@@ -10,7 +10,7 @@ Camera::Camera(float fov, float aspectRatio, float near, float far) :
 }
 
 void Camera::move(Maths::Vec3f vec) {
-	m_view.translate(vec);
+	m_view.translateLocal(vec);
 }
 
 void Camera::rotate(float angle, Maths::Vec3f vec) {

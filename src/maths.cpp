@@ -128,6 +128,15 @@ namespace Maths {
 		return m_arr[row][column];
 	}
 
+	Mat4& Mat4::operator= (const Mat4& vec) {
+		for (int i{ 0 }; i < 4; i++) {
+			for (int j{ 0 }; j < 4; j++) {
+				m_arr[i][j] = vec(i, j);
+			}
+		}
+		return *this;
+	}
+
 	//done in this manner to ensure "unnamed" return value optimisation despite it's verbosity, as named rvo is not guranteed
 	Mat4 operator+(const Mat4& v1, const Mat4& v2) { 
 		return Mat4(std::array<std::array<float, 4>, 4>{
@@ -189,6 +198,9 @@ namespace Maths {
 		});
 	}
 
+
+	
+
 	void Mat4::transpose3() {
 		std::swap(m_arr[0][1], m_arr[1][0]);
 		std::swap(m_arr[0][2], m_arr[2][0]);
@@ -201,21 +213,148 @@ namespace Maths {
 			+  m_arr[0][2] * (m_arr[1][0] * m_arr[2][1] - m_arr[1][1] * m_arr[2][0]);
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	Mat4 Mat4::getInverse() {
+	Mat4 Mat4::getInverse() { // we return the identity matrix if no inverse exists
+
+		//Gauss-Jordan Matrix Inversion
+		//we create an identity matrix, and apply the same elementary operations to it that we apply to
+		//the original matrix which transforms it into an identity matrix to find it's inverse
+
+		Mat4 copy = m_arr;
+
+
+		Mat4 inverse{};
+		float temp{};
+		float invTemp{};
+		int largestRowAbsolute{};
+		
+		//we attempt to row reduce each column one at a time
+		//first step, check if pivot is non zero, if not swap with next row which is non zero
+		for (int j{ 0 };j < 4;j++) { // change j to column and i to row
+			if (copy(j,j) == 0.0f) {
+
+				temp = std::abs(copy(0,j));
+				largestRowAbsolute = 0;
+
+				if (temp < std::abs(copy(1,j))) {
+					temp = std::abs(copy(1,j));
+					largestRowAbsolute = 1;
+				}
+				if (temp < std::abs(copy(2,j))) {
+					temp = std::abs(copy(2,j));
+					largestRowAbsolute = 2;
+				}
+				if (temp < std::abs(copy(3,j))) {
+					temp = std::abs(copy(3,j));
+					largestRowAbsolute = 3;
+				}
+
+
+				if (largestRowAbsolute == 0) {
+					for (int i{ 0 }; i < 4; i++) {
+						temp = copy(j,i);
+						invTemp = inverse(j, i);
+
+						copy(j,i) = copy(0,i);
+						inverse(j, i) = inverse(0, i);
+
+						copy(0,i) = temp;
+						inverse(0, i) = invTemp;
+					}
+
+				}
+				else if (largestRowAbsolute == 1) {
+					for (int i{ 0 }; i < 4; i++) {
+						temp = copy(j,i);
+						invTemp = inverse(j,i);
+
+						copy(j,i) = copy(1,i);
+						inverse(j, i) = inverse(1, i);
+
+						copy(1,i) = temp;
+						inverse(1, i) = invTemp;
+					}
+
+				}
+				else if (largestRowAbsolute == 2) {
+					for (int i{ 0 }; i < 4; i++) {
+						temp = copy(j, i);
+						invTemp = inverse(j, i);
+
+						copy(j,i) = copy(2,i);
+						inverse(j, i) = inverse(2, i);
+
+						copy(2,i) = temp;
+						inverse(2, i) = invTemp;
+					}
+				}
+				else if (largestRowAbsolute == 3) {
+					for (int i{ 0 }; i < 4; i++) {
+						temp = copy(j, i);
+						invTemp = inverse(j, i);
+
+						copy(j,i) = copy(3,i);
+						inverse(j, i) = inverse(3, i);
+
+						copy(3,i) = temp;
+						inverse(3, i) = invTemp;
+					}
+				}
+				else {
+					return Mat4();
+				}
+			}
+		}
+
+		//step two, we eliminate the rows under the diagonal element
+		//we multiply our "pivots" row by the negative value of the element we want to eliminate divided by itself
+		//this makes it equal to the negative of the element we want to eliminate
+		//we then add the rows together to eliminate the element
+		//we can call such a value k, where k = m_arr[row][column] / m_arr[column][column] 
+		//repeat for all elements we wish to eliminate
+
+		float k{};
+		for (int column{0}; column <3; column++) {
+			for (int row{ column+1 }; row < 4; row++) {
+				k = copy(row,column) / copy(column,column);
+				for (int p{0}; p < 4; p++) {
+					copy(row,p) -= k * copy(column,p);
+					inverse(row, p) -= k * inverse(column, p);
+				}
+				copy(row,column) = 0.0f; //this is just for safety due to floating point imprecision
+			}
+		}
+
+
+		//step 3, we scale our pivots to 0
+		//we reuse k as a divisor
+
+		for (int row{ 0 }; row < 4; row++) {
+			k = copy(row,row);
+			for (int column{ 0 }; column < 4; column++) {
+				copy(row,column) /= k;
+				inverse(row, column) /= k;
+			}
+		}
+
+
+		//step 4, eliminate numbers above the diagonal
+		//we reuse k again
+
+		for (int row{ 0 }; row < 4; row++) {
+			for (int column{ row + 1 }; column < 4; column++) {
+				k = copy(row,column);
+				for (int p{ 0 }; p < 4; p++) {
+					copy(row,p) -= copy(column,p) * k;
+					inverse(row, p) -= inverse(column, p) * k;
+				}
+				copy(row,column) = 0.0f; //this is just for safety due to floating point imprecision
+			}
+		}
 
 
 
-
-
-
-
-
-
-
-		return Mat4();
+		return inverse;
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Mat4::rotate(float angle, Vec3f vec) { //ideally this should use quaternions but oh well
 
@@ -266,7 +405,7 @@ namespace Maths {
 			});
 	}
 
-	void Mat4::translate(Vec3f vec) {
+	void Mat4::translateLocal(Vec3f vec) {
 		(*this) = (*this) * Mat4({
 			1,0,0,vec(0),
 			0,1,0,vec(1),
@@ -275,6 +414,14 @@ namespace Maths {
 			});
 	}
 
+	void Mat4::translateWorld(Vec3f vec) {
+		(*this) = Mat4({
+			1,0,0,vec(0),
+			0,1,0,vec(1),
+			0,0,1,vec(2),
+			0,0,0,1
+			}) * (*this);
+	}
 
 	
 	// the projection matrix doesn't use * as * is definied for affine transformations as an optimisation
@@ -340,6 +487,23 @@ namespace Maths {
 		p2(2) = temp(2);
 	}
 
+	std::vector<float> Interpolate(int  i0, int i1, float d0, float d1) {
+		std::vector<float> vec;
+		if (i0 == i1) {
+			vec.push_back(d0);
+			return vec;
+		}
+		float gradient = (d1 - d0) / (i1 - i0);
+		vec.reserve(i1 - i0);
+		float d = d0;
+		for (int i{ i0 }; i < i1; i++) {
+			vec.push_back(d);
+			d = d + gradient;
+		}
+
+		return vec;
+	}
+
 	float edgeFunction(Vec3f p1, Vec3f p2, float x, float y){
 		return (x - p1(0)) * (p2(1) - p1(1)) - (y - p1(1)) * (p2(0) - p1(0));
 	}
@@ -347,4 +511,5 @@ namespace Maths {
 	float edgeFunction(Vec3f p1, Vec3f p2, Vec3f p3) {
 		return (p3(0) - p1(0)) * (p2(1) - p1(1)) - (p3(1) - p1(1)) * (p2(0) - p1(0));
 	}
+
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <vector>
 #include "colour.h"
 
 // note that the maths used here are simple and only for the use cases that are needed
@@ -61,13 +62,15 @@ namespace Maths {
 		//affine transformations (does not change w)
 		void rotate(float angle, Vec3f vec); // angle is in radians
 		void scale(Vec3f vec);
-		void translate(Vec3f vec);
+		void translateLocal(Vec3f vec);
+		void translateWorld(Vec3f vec);
 
 		//projective transformations (does change w)
 		void project(float fov, float aspectRatio, float near, float far);
 
 		float& operator() (int row, int column);
 		const float& operator() (int row, int column) const;
+		Mat4& operator= (const Mat4& vec);
 
 		friend Mat4 operator+(const Mat4& v1, const Mat4& v2);
 		friend Mat4 operator-(const Mat4& v1, const Mat4& v2);
@@ -83,6 +86,9 @@ namespace Maths {
 	void swap(RasterPoint& p1, RasterPoint& p2);
 	void swap(Vec3f& p1, Vec3f& p2);
 
+	std::vector<float> Interpolate(int  i0, int i1, float d0, float d1);
+
 	float edgeFunction(Vec3f p1, Vec3f p2, float x, float y);
 	float edgeFunction(Vec3f p1, Vec3f p2, Vec3f p3);
+	
 }

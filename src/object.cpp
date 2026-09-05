@@ -6,7 +6,7 @@ Object::Object(const std::vector<Maths::Vec3f>& vertices, const std::vector<std:
 }
 
 void Object::move(Maths::Vec3f vec) {
-	m_model.translate(vec);
+	m_model.translateWorld(vec);
 }
 
 void Object::rotate(float angle, Maths::Vec3f vec) {

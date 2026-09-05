@@ -29,9 +29,9 @@ project(main1)
 #-----------------------------------------------------------------library
 #add_subdirectory(external/)  generic external library include
 #---------                  SDL library                  ---------
-set(DSDL_STATIC ON CACHE BOOL "Build SDL statically" FORCE)
-set(DSDL_SHARED OFF CACHE BOOL "Build SDL dynamically" FORCE)
-add_subdirectory(external/SDL ) #EXCLUDE_FROM_ALL if you don't want to rebuild SDL
+set(SDL_STATIC ON CACHE BOOL "Build SDL statically" FORCE)
+set(SDL_SHARED OFF CACHE BOOL "Build SDL dynamically" FORCE)
+add_subdirectory(external/SDL) #EXCLUDE_FROM_ALL if you don't want to rebuild SDL
 #-----------------------------------------------------------------
 
 #MY_SOURCES is a list of all source files in the project so we don't have to add them manually

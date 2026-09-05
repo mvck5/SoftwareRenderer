@@ -24,6 +24,7 @@ public:
 
     std::vector<std::uint32_t>& getFrameBuffer();
     std::vector<float>& getZBuffer();
+    Camera& getCamera();
     int getWidth();
     int getHeight();
     int getPitch();

@@ -97,6 +97,20 @@ once everything is in raster coordinates, we apply the rasterisation algorithm b
 (or just lines if it's wireframe)
 
 
+
+
+----Rendering pipeline----
+-Take in vertex data
+-Sort vertex data
+-pass triangle to vertex shader
+-vertex shader does stuff
+////////// Likely this is where we'd do our "culling" optimisations" //////////
+-pass triangle to fragment shader
+-fragment shader does stuff
+
+
+
+
 ----Matrices----
 
 Scaling matrix:
@@ -161,58 +175,84 @@ where: f is 1/(tan(fov/2)), a is the aspect ratio, fn is the near cutoff, ff is 
 
 ----Things to fix----
 
+-performance tanks when getting close to objects
+
+-performance gets worse as we move to the left or right of the object
+this could be as when we let an object get closer to the "edge" of the view thrustrum it "stretches" due to perspective projection
+so it covers more pixels/area, this occurs when it's outside the screen too so it would keep increasing the amount of draw calls
+this could likely be fixed with some form of thrustrum culling when deciding to check if we should draw a triangle
+
 -rename edgeFunction, as it really calculates an area
 
+-objects seem to "stretch" as they get closer to the screen
+likely a neccesary artifact of projection matrices but look into it
+
+-processing drastically increases when near the edge of the screen
+
+-an object at the edge of the screen can cause a line to be drawn at the opposite edge
 
 
 
 ----Features to implement----
 
--fps counter
-
--outlines around objects(or around their triangles)
+-other vertex attributes such as colour or texture coords
+This is done by using barycentric coordinates where we use "vertex attribute" / z value instead of "vertex attribute",
+as that's perspective correct interpolation. We would then multiply out that value by z to get the correct interpolated
+value
 
 -normals(inverse for non orthognal transformations, which occur with non uniform scaling)
 this will likely also mean we can't use a "winding agnostic" method of filling in triangles
 and have to enforce it to being either clockwise or anticlockwise
 
--List of objects in the "rasteriser" class, draw each object per frame
-likely frustrum culling would be implemented here
+-make model class, which holds all vertex data
+an object should be an "instance" of a model, which holds it's own model matrix
+rewrite draw functions to account for this
 
--object class/rasteriser object list delete function
+-Some "scene" class or struct which holds and draws through all objects
+
+-object class/rasteriser object list delete function (maybe, idk this would likely require sending everything to the heap
+which could reduce performance for no real gain)
 
 -obj loader(we need to be able to display textures/uv maps and link verteces together, for now ignore materials)
 
 -shading/shaders(at the very least some form of diffuse and specular lighting)
 
--possibly change the z-buffer to a-buffer so we can display non opaque objects such as windows
+-vertex and fragment shader pipline
+
+-way to resize screen, while also changing the frame and z buffers
+likely just resizing the buffers on window change using sdl3's event system
+
+
 
 
 ----Optimisations to implement----
 
--optimise the barycentric coordinate calculations
-we currently do (l.1 x v1 + l.2 x v2 + l.3 x v3) where l.1 + l.2 + l.3 = 1
-but this can be optimised to 2 additions and 2 multiplications
-
 -use more optimised line drawing algorithm
-right now it uses more memory than needed, plus uses interpolation so floating point arithmetic which is slow
+right now it uses more memory than needed, plus uses interpolation on floating point arithmetic which is slow
+also may be copying the vector of positions, so check if that's the case
 possibly use "Bresenham’s Algorithm" instead
 
--stopping repeat lines from triangles that share two points from being drawn (example, the middle line of a square made of two triangles)
+-stopping repeat lines from triangles that share two points from being drawn (example, the middle line of a square made of two triangles) 
+not entirely sure this is possible or more efficient though
 
--SIMD(single instruction multiple data) 
+-possibly change the triangleDraw to use integers instead of floating point numbers
+as integer operations are cheaper to perform
+
+-various culling techniques:
+frustrum - discard objects outside the camera’s viewing volume
+back face - discard polygons facing away from the camera
+occlusion - discard objects completely hidden behind other geometry
+bounding box(technically already done, but could be optimised) - test an object’s bounding box before processing its detailed geometry
+near/far - remove geometry outside the camera’s depth range
+screen space - clip primitives against the viewport to avoid unnecessary rasterisation
+
+-Tiling
+we can check the corner pixels of a "tile" and if all of those are true for the triangle then we can simply draw
+without any further checks needed. if the corners aren't filled then we can subdivide the "tile" further
+example: check an 8x8 tile's corners, if false check 4 4x4 tiles, if false check 16 2x2 tiles, if false check 64 pixels
 
 -multithreading
 
--various culling techniques: back face, frustrum, occlusion
-
--Tiling(divide screen into smaller blocks to keep data in cache)
-
--incremental edge functions
+-SIMD(single instruction multiple data) this will allow us to do multiple floating point calculations at once
 
 -change matrix rotation to use quaternions
-
--depth pre pass????????
-
--BVH(bounding volume hierarchy)????????
-
