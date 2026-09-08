@@ -74,11 +74,26 @@ int main()
     Rasteriser rend(WIDTH,HEIGHT);
 
     // Load a mesh
+    Mesh treeMesh("tree.obj");
     Mesh cubeMesh("cube.obj");
+    Mesh lightMesh("light.obj");
+    Mesh chairMesh("chair.obj");
 
     // Create an object
+    Object tree(treeMesh);
+    tree.move(Maths::Vec3f{ 0.0f,0.0f,-50.0f });
+
     Object cube(cubeMesh);
-    cube.move(Maths::Vec3f{0.0f,0.0f,-5.0f});
+    cube.move(Maths::Vec3f{ 20.0f,0.0f,-50.0f });
+
+    Object light(lightMesh);
+    light.move(Maths::Vec3f{ -25.0f,5.0f,-50.0f });
+    light.scale(Maths::Vec3f{ 0.7,0.7f,0.7f });
+
+    Object chair(chairMesh);
+    chair.move(Maths::Vec3f{ 10.0f,0.0f,-50.0f });
+    chair.scale(Maths::Vec3f{ 5.0f,5.0f,5.0f });
+
     
     //frame rate stuff
     Timer timer{};
@@ -116,34 +131,34 @@ int main()
         key_states = SDL_GetKeyboardState(NULL);
 
         if (key_states[SDL_SCANCODE_W]) {
-            rend.getCamera().move(Maths::Vec3f{0.0f,0.0f,-0.1f});
+            rend.getCamera().move(Maths::Vec3f{0.0f,0.0f,-0.2f});
         }
         if (key_states[SDL_SCANCODE_A]) {
-            rend.getCamera().move(Maths::Vec3f{ -0.1f,0.0f,0.0f });
+            rend.getCamera().move(Maths::Vec3f{ -0.2f,0.0f,0.0f });
         }
         if (key_states[SDL_SCANCODE_S]) {
-            rend.getCamera().move(Maths::Vec3f{ 0.0f,0.0f,0.1f });
+            rend.getCamera().move(Maths::Vec3f{ 0.0f,0.0f,0.2f });
         }
         if (key_states[SDL_SCANCODE_D]) {
-            rend.getCamera().move(Maths::Vec3f{ 0.1f,0.0f,0.0f });
+            rend.getCamera().move(Maths::Vec3f{ 0.2f,0.0f,0.0f });
         }
         if (key_states[SDL_SCANCODE_Q]) {
-            rend.getCamera().move(Maths::Vec3f{ 0.0f,0.1f,0.0f });
+            rend.getCamera().move(Maths::Vec3f{ 0.0f,0.2f,0.0f });
         }
         if (key_states[SDL_SCANCODE_E]) {
-            rend.getCamera().move(Maths::Vec3f{ 0.0f,-0.1f,0.0f });
+            rend.getCamera().move(Maths::Vec3f{ 0.0f,-0.2f,0.0f });
         }
         if (key_states[SDL_SCANCODE_T]) {
-            rend.getCamera().rotate(Maths::degreeToRadian(0.5f), Maths::Vec3f{ 1.0f,0.0f,0.0f });
+            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 1.0f,0.0f,0.0f });
         }
         if (key_states[SDL_SCANCODE_G]) {
-            rend.getCamera().rotate(Maths::degreeToRadian(0.5f), Maths::Vec3f{ -1.0f,0.0f,0.0f });
+            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ -1.0f,0.0f,0.0f });
         }
         if (key_states[SDL_SCANCODE_F]) {
-            rend.getCamera().rotate(Maths::degreeToRadian(0.5f), Maths::Vec3f{ 0.0f,1.0f,0.0f });
+            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 0.0f,1.0f,0.0f });
         }
         if (key_states[SDL_SCANCODE_H]) {
-            rend.getCamera().rotate(Maths::degreeToRadian(0.5f), Maths::Vec3f{ 0.0f,-1.0f,0.0f });
+            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 0.0f,-1.0f,0.0f });
         }
         
        
@@ -180,7 +195,12 @@ int main()
         }
 
         // Draw the objects 
+        rend.drawObject(tree);
+        tree.rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{0.0f,1.0f,0.0f});
         rend.drawObject(cube);
+        rend.drawObject(light);
+        rend.drawObject(chair);
+
 
         // --------------------------------------------------
         // SENDING FRAMEBUFFER TO SDL
