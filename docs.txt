@@ -187,26 +187,19 @@ this could likely be fixed with some form of thrustrum culling when deciding to 
 -objects seem to "stretch" as they get closer to the screen
 likely a neccesary artifact of projection matrices but look into it
 
--processing drastically increases when near the edge of the screen
-
 -an object at the edge of the screen can cause a line to be drawn at the opposite edge
+
 
 
 
 ----Features to implement----
 
--other vertex attributes such as colour or texture coords
-This is done by using barycentric coordinates where we use "vertex attribute" / z value instead of "vertex attribute",
-as that's perspective correct interpolation. We would then multiply out that value by z to get the correct interpolated
-value
+-be able to transform normals
+this should happen each time an object is transformed
+something about having to transform them by the inverse
 
--normals(inverse for non orthognal transformations, which occur with non uniform scaling)
-this will likely also mean we can't use a "winding agnostic" method of filling in triangles
-and have to enforce it to being either clockwise or anticlockwise
-
--make model class, which holds all vertex data
-an object should be an "instance" of a model, which holds it's own model matrix
-rewrite draw functions to account for this
+-texture function
+this would include making sure Vec2f has all the functions it needs(likely just copy from Vec3f)
 
 -Some "scene" class or struct which holds and draws through all objects
 

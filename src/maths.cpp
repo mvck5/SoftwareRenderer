@@ -2,9 +2,30 @@
 #include <algorithm>
 #include "maths.h"
 
-#include <iostream>
+
 
 namespace Maths {
+
+	Vec2f::Vec2f(float x, float y) : 
+		m_arr{x,y} {
+	}
+
+	Vec2f& Vec2f::operator= (const Vec2f& vec) {
+		m_arr[0] = vec(0);
+		m_arr[1] = vec(1);
+
+		return *this;
+	}
+
+	float& Vec2f::operator()(int index) {
+		return m_arr[index];
+	}
+
+	const float& Vec2f::operator()(int index) const {
+		return m_arr[index];
+	}
+
+
 	Vec3f::Vec3f(float x, float y, float z) :
 		m_arr{ x,y,z } {
 	}

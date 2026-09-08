@@ -26,7 +26,7 @@ endif()
 
 project(main1)
 
-#-----------------------------------------------------------------library
+#-----------------------------------------------------------------libraries
 #add_subdirectory(external/)  generic external library include
 #---------                  SDL library                  ---------
 set(SDL_STATIC ON CACHE BOOL "Build SDL statically" FORCE)
@@ -40,13 +40,7 @@ file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/
 add_executable(main1 "${MY_SOURCES}")
 
 
-if(PRODUCTION_BUILD)
-	# setup the ASSETS_PATH macro to be in the root folder of the exe
-	target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="./resources/") 
-else()
-	# This is useful to get an ASSETS_PATH in the IDE during development
-	target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/")
-endif()
+target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/")
 
 
 if(MSVC) # If using the VS compiler...
@@ -54,7 +48,6 @@ if(MSVC) # If using the VS compiler...
 	target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC _CRT_SECURE_NO_WARNINGS) # turns of warning about "secure functions"
 
 	#set_target_properties("${CMAKE_PROJECT_NAME}" PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
-
 endif()
 
 

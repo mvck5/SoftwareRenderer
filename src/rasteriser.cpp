@@ -23,20 +23,20 @@ void Rasteriser::drawPixel(Maths::RasterPoint p, std::uint32_t colour) {
     }
 }
 
-void Rasteriser::drawLine(Maths::Vec3f p1, Maths::Vec3f p2, std::uint32_t colour) {
+void Rasteriser::drawLine(Maths::Vertex p1, Maths::Vertex p2, std::uint32_t colour) {
 
-    Maths::RasterPoint point1{ static_cast<int>(p1(0) * m_width),static_cast<int>(p1(1) * m_height),p1(2) };
-    Maths::RasterPoint point2{ static_cast<int>(p2(0) * m_width),static_cast<int>(p2(1) * m_height),p2(2) };
+    Maths::RasterPoint point1{ static_cast<int>(p1.position(0) * m_width),static_cast<int>(p1.position(1) * m_height),p1.position(2) };
+    Maths::RasterPoint point2{ static_cast<int>(p2.position(0) * m_width),static_cast<int>(p2.position(1) * m_height),p2.position(2) };
     
     //still need to calculate and interpolate z value
 
-    if (std::abs(p2(0) - p1(0)) > std::abs(p2(1) - p1(1))) {
+    if (std::abs(p2.position(0) - p1.position(0)) > std::abs(p2.position(1) - p1.position(1))) {
         //Line is more horizontal than vertical
-        if (p1(0) > p2(0)) {
-            Maths::swap(p1, p2); 
+        if (p1.position(0) > p2.position(0)) {
+            Maths::swap(p1.position, p2.position);
             Maths::swap(point1, point2);
         }
-        std::vector<float> positions{ Maths::Interpolate(point1.x, point2.x, p1(1) * m_height, p2(1) * m_height)};
+        std::vector<float> positions{ Maths::Interpolate(point1.x, point2.x, p1.position(1) * m_height, p2.position(1) * m_height)};
 
         float zGradient{(point2.z-point1.z) / positions.size()}; //same as changing per x coord increase
 
@@ -46,11 +46,11 @@ void Rasteriser::drawLine(Maths::Vec3f p1, Maths::Vec3f p2, std::uint32_t colour
     }
     else {
         //Line is more vertical than horizontal
-        if (p1(1) > p2(1)) {
-            Maths::swap(p1, p2); 
+        if (p1.position(1) > p2.position(1)) {
+            Maths::swap(p1.position, p2.position);
             Maths::swap(point1, point2);
         }
-        std::vector<float> positions{ Maths::Interpolate(point1.y, point2.y, p1(0) * m_width, p2(0) * m_width) };
+        std::vector<float> positions{ Maths::Interpolate(point1.y, point2.y, p1.position(0) * m_width, p2.position(0) * m_width) };
         
         float zGradient{ (point2.z - point1.z) / positions.size() }; //same as changing per x coord increase
 
@@ -61,22 +61,24 @@ void Rasteriser::drawLine(Maths::Vec3f p1, Maths::Vec3f p2, std::uint32_t colour
     
 }
 
-void Rasteriser::drawTriangle(Maths::Vec3f p1, Maths::Vec3f p2, Maths::Vec3f p3, bool wireframe, std::uint32_t colour) {
+void Rasteriser::drawTriangle(Maths::Vertex p1, Maths::Vertex p2, Maths::Vertex p3, bool wireframe, std::uint32_t colour) {
     
+    //////////////////////////////////////////////////////// this also needs to be changed likely maybe idk
     if (wireframe) {
         this->drawLine(p1, p2, colour);
         this->drawLine(p1, p3, colour);
         this->drawLine(p2, p3, colour);
     }
+    ////////////////////////////////////////////////////////
     else {
 
         std::array<int, 6> arr{ 
-            static_cast<int>(p1(0) * m_width), 
-            static_cast<int>(p2(0) * m_width),
-            static_cast<int>(p3(0) * m_width),
-            static_cast<int>(p1(1) * m_height),
-            static_cast<int>(p2(1) * m_height),
-            static_cast<int>(p3(1) * m_height)};
+            static_cast<int>(p1.position(0) * m_width), 
+            static_cast<int>(p2.position(0) * m_width),
+            static_cast<int>(p3.position(0) * m_width),
+            static_cast<int>(p1.position(1) * m_height),
+            static_cast<int>(p2.position(1) * m_height),
+            static_cast<int>(p3.position(1) * m_height)};
 
         int xMin{ arr[0] };
         int xMax{ arr[0] };
@@ -100,39 +102,39 @@ void Rasteriser::drawTriangle(Maths::Vec3f p1, Maths::Vec3f p2, Maths::Vec3f p3,
             }
         }
 
-        p1(0) = p1(0) * m_width;
-        p1(1) = p1(1) * m_height;
-        p2(0) = p2(0) * m_width;
-        p2(1) = p2(1) * m_height;
-        p3(0) = p3(0) * m_width;
-        p3(1) = p3(1) * m_height;
+        p1.position(0) *= m_width;
+        p1.position(1) *= m_height;
+        p2.position(0) *= m_width;
+        p2.position(1) *= m_height;
+        p3.position(0) *= m_width;
+        p3.position(1) *= m_height;
 
         float edge1,edge2,edge3;
-        float area{ Maths::edgeFunction(p1,p2,p3)};
+        float area{ Maths::edgeFunction(p1.position,p2.position,p3.position)};
 
         float z;
 
         //we precalculate parts of z, as it reduces the amount of operations needed for baryocentric coordinate calculations
         //this should be done for all vertex attributes
-        float tempZ1{ 1/p1(2) };
-        float tempZ2{ 1/p2(2) - 1/p1(2) };
-        float tempZ3{ 1/p3(2) - 1/p1(2) };
+        float tempZ1{ 1/p1.position(2) };
+        float tempZ2{ 1/p2.position(2) - 1/p1.position(2) };
+        float tempZ3{ 1/p3.position(2) - 1/p1.position(2) };
         
         //precalculate edge function and incrememnt it by a step, this means we only have to do
         //a singular addition instead of recalculating the edge function for each pixel
         //essentially we're just linearly interprolating and adding it up
 
-        float preEdge1{ Maths::edgeFunction(p1, p2, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
-        float xStepEdge1{ p2(1) - p1(1) };
-        float yStepEdge1{ p1(0) - p2(0) };
+        float preEdge1{ Maths::edgeFunction(p1.position, p2.position, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
+        float xStepEdge1{ p2.position(1) - p1.position(1) };
+        float yStepEdge1{ p1.position(0) - p2.position(0) };
 
-        float preEdge2{ Maths::edgeFunction(p2, p3, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
-        float xStepEdge2{ p3(1) - p2(1) };
-        float yStepEdge2{ p2(0) - p3(0) };
+        float preEdge2{ Maths::edgeFunction(p2.position, p3.position, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
+        float xStepEdge2{ p3.position(1) - p2.position(1) };
+        float yStepEdge2{ p2.position(0) - p3.position(0) };
 
-        float preEdge3{ Maths::edgeFunction(p3, p1, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
-        float xStepEdge3{ p1(1) - p3(1) };
-        float yStepEdge3{ p3(0) - p1(0) };
+        float preEdge3{ Maths::edgeFunction(p3.position, p1.position, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
+        float xStepEdge3{ p1.position(1) - p3.position(1) };
+        float yStepEdge3{ p3.position(0) - p1.position(0) };
 
         float tempEdge1;
         float tempEdge2;
@@ -194,14 +196,8 @@ void Rasteriser::drawTriangle(Maths::Vec3f p1, Maths::Vec3f p2, Maths::Vec3f p3,
 }
 
 void Rasteriser::drawObject(Object& object, bool wireframe) {
-    const std::vector<std::array<int, 3>>& drawOrder{ object.getOrder() };
-
-    Maths::Vec3f vert1;
-    Maths::Vec3f vert2;
-    Maths::Vec3f vert3;
 
     Maths::Mat4 total{};
-
 
     //we need thie inverse of the camera and as it has only undergone affine transformations it's quicker to find the inverse
     //then multiply the translation by the inverse
@@ -221,25 +217,65 @@ void Rasteriser::drawObject(Object& object, bool wireframe) {
                  + view(2, 1) * m_camera.getView()(1, 3)
                  + view(2, 2) * m_camera.getView()(2, 3));
 
-
-
     total = total * object.getModel(); //model transformation
     total = view * total; //view transformation
     total.project(m_camera.getFov(), m_camera.getAspectRatio(), m_camera.getNear(), m_camera.getFar()); //projection transformation
 
-    for (std::size_t i{ 0 }; i < drawOrder.size(); i++) {
-        vert1 = object.getVertex(drawOrder[i][0]);
-        vert2 = object.getVertex(drawOrder[i][1]);
-        vert3 = object.getVertex(drawOrder[i][2]);
 
-        vert1.project(total); //project here means that's the transformation is projective / not affine
-        vert2.project(total);
-        vert3.project(total);
+    Maths::Vec3f positionVert1;
+    Maths::Vec3f positionVert2;
+    Maths::Vec3f positionVert3;
+
+    Maths::Vec3f normalVert1;
+    Maths::Vec3f normalVert2;
+    Maths::Vec3f normalVert3;
+
+    Maths::Vec2f textureVert1;
+    Maths::Vec2f textureVert2;
+    Maths::Vec2f textureVert3;
+
+    const Mesh& mesh = object.getMesh();
+
+    for (std::size_t i{ 0 }; i < mesh.getFaces().size(); i++) {
+        
+        ////////////////////////////////////////////////////////// POSITIONS
+        positionVert1 = mesh.getPositions()[mesh.getFaces()[i][0][0] -1];
+        positionVert2 = mesh.getPositions()[mesh.getFaces()[i][1][0] -1]; 
+        positionVert3 = mesh.getPositions()[mesh.getFaces()[i][2][0] -1];
+
+        positionVert1.project(total);
+        positionVert2.project(total);
+        positionVert3.project(total);
+        ////////////////////////////////////////////////////////// TEXTURES
+        textureVert1 = mesh.getTexCoords()[mesh.getFaces()[i][0][1] -1];
+        textureVert2 = mesh.getTexCoords()[mesh.getFaces()[i][1][1] -1];
+        textureVert3 = mesh.getTexCoords()[mesh.getFaces()[i][2][1] -1];
+        //DO SOME TEXTURE TRANSFORMATION STUFF HERE
+        //NOT A CLUE IF THATS EVEN NEEDED
+        ////////////////////////////////////////////////////////// NORMALS
+        normalVert1 = mesh.getNormals()[mesh.getFaces()[i][0][2] -1];
+        normalVert2 = mesh.getNormals()[mesh.getFaces()[i][1][2] -1];
+        normalVert3 = mesh.getNormals()[mesh.getFaces()[i][2][2] -1];
+        //DO SOME NORMAL TRANSFORMATION STUFF HERE
+        //LIKELY MEANS TRANSFORM IT BY THE INVERSE OF PROJECT BUT WHO KNOWS REALLY
+        //////////////////////////////////////////////////////////
 
         this->drawTriangle( //we change the vertices from -1,1 to 0-1 coords before passing them
-            Maths::Vec3f{ (vert1(0) + 1) / 2, (vert1(1) + 1) / 2, vert1(2) },
-            Maths::Vec3f{ (vert2(0) + 1) / 2, (vert2(1) + 1) / 2, vert2(2) },
-            Maths::Vec3f{ (vert3(0) + 1) / 2, (vert3(1) + 1) / 2, vert3(2) },
+            Maths::Vertex{ 
+            Maths::Vec3f{(positionVert1(0) + 1) / 2, (positionVert1(1) + 1) / 2, positionVert1(2) },
+            Maths::Vec3f{normalVert1(0),normalVert1(1),normalVert1(2)},
+            Maths::Vec2f{textureVert1(0),textureVert1(1)}},
+
+            Maths::Vertex{
+            Maths::Vec3f{(positionVert2(0) + 1) / 2, (positionVert2(1) + 1) / 2, positionVert2(2) },
+            Maths::Vec3f{normalVert2(0),normalVert2(1),normalVert2(2)},
+            Maths::Vec2f{textureVert2(0),textureVert2(1)} },
+
+            Maths::Vertex{
+            Maths::Vec3f{(positionVert3(0) + 1) / 2, (positionVert3(1) + 1) / 2, positionVert3(2) },
+            Maths::Vec3f{normalVert3(0),normalVert3(1),normalVert3(2)},
+            Maths::Vec2f{textureVert3(0),textureVert3(1)} },
+
             wireframe);
     }
 }

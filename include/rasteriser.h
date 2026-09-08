@@ -18,8 +18,8 @@ public:
     Rasteriser(int width, int height, Camera camera = Camera());
 
     void drawPixel(Maths::RasterPoint p, std::uint32_t colour);
-    void drawLine(Maths::Vec3f p1, Maths::Vec3f p2, std::uint32_t colour = Colours::white);
-    void drawTriangle(Maths::Vec3f p1, Maths::Vec3f p2, Maths::Vec3f p3, bool wireframe = false, std::uint32_t colour = Colours::white);
+    void drawLine(Maths::Vertex p1, Maths::Vertex p2, std::uint32_t colour = Colours::white);
+    void drawTriangle(Maths::Vertex p1, Maths::Vertex p2, Maths::Vertex p3, bool wireframe = false, std::uint32_t colour = Colours::white);
     void drawObject(Object& object, bool wireframe = false);
 
     std::vector<std::uint32_t>& getFrameBuffer();

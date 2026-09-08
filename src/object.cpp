@@ -1,8 +1,8 @@
 #include "object.h"
 #include <iostream>
 
-Object::Object(const std::vector<Maths::Vec3f>& vertices, const std::vector<std::array<int, 3>>& drawOrder):
-	m_vertices{ vertices }, m_drawOrder{ drawOrder }, m_model{ Maths::Mat4{} } {
+Object::Object(const Mesh& mesh):
+	m_mesh{ mesh }, m_model{ Maths::Mat4{} } {
 }
 
 void Object::move(Maths::Vec3f vec) {
@@ -17,13 +17,8 @@ void Object::scale(Maths::Vec3f vec) {
 	m_model.scale(vec);
 }
 
-
-const std::vector<std::array<int, 3>>& Object::getOrder() {
-	return m_drawOrder;
-}
-
-Maths::Vec3f Object::getVertex(int index) {
-	return m_vertices[index];
+const Mesh& Object::getMesh() {
+	return m_mesh;
 }
 
 const Maths::Mat4& Object::getModel() {

@@ -10,13 +10,16 @@ namespace Maths {
 
 	class Mat4;
 
-	struct RasterPoint {
-		int x{};
-		int y{};
-		float z{};
-	};
+	struct Vec2f {
+	private:
+		std::array<float, 2> m_arr;
+	public:
+		Vec2f(float x = 0.0f, float y = 0.0f);
 
-	
+		float& operator() (int index);
+		const float& operator() (int index) const;
+		Vec2f& operator= (const Vec2f& vec);
+	};
 
 	class Vec3f {
 	private:
@@ -46,6 +49,8 @@ namespace Maths {
 		friend Vec3f operator/(const Vec3f& v, float scalar);
 		friend Vec3f operator/(float scalar, const Vec3f& v);
 	};
+
+	
 
 	class Mat4 {
 	private:
@@ -79,6 +84,19 @@ namespace Maths {
 		friend Mat4 operator*(float scalar, const Mat4& v);
 
 	};
+
+	struct RasterPoint {
+		int x{};
+		int y{};
+		float z{};
+	};
+
+	struct Vertex {
+		Vec3f position{};
+		Vec3f normal{};
+		Vec2f texCoord{};
+	};
+
 
 	float degreeToRadian(float angle);
 	float radianToDegree(float angle);

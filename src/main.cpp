@@ -5,55 +5,10 @@
 #include "maths.h"
 #include "object.h"
 #include "timer.h"
+#include "mesh.h"
 
 constexpr int WIDTH = 1280;
 constexpr int HEIGHT = 720;
-
-//note that vertices should be declared counter-clockwise
-
-std::vector<Maths::Vec3f> squareVertices{
-    Maths::Vec3f{-0.5f,-0.5f, 0.0f}, //bottom left
-    Maths::Vec3f{ 0.5f,-0.5f, 0.0f}, //bottom right
-    Maths::Vec3f{-0.5f, 0.5f, 0.0f}, //top left
-    Maths::Vec3f{ 0.5f, 0.5f, 0.0f}  //top right
-
-};
-std::vector<std::array<int, 3>> squareDrawOrder{ 
-    std::array<int, 3>{0,1,2},
-    std::array<int, 3>{1,2,3}
-};
-
-std::vector<Maths::Vec3f> cubeVertices{
-    Maths::Vec3f{-0.5f,-0.5f,-0.5f}, //back bottom left
-    Maths::Vec3f{ 0.5f,-0.5f,-0.5f}, //back bottom right
-    Maths::Vec3f{-0.5f, 0.5f,-0.5f}, //back top left
-    Maths::Vec3f{ 0.5f, 0.5f,-0.5f}, //back top right
-
-    Maths::Vec3f{-0.5f,-0.5f, 0.5f}, //front bottom left
-    Maths::Vec3f{ 0.5f,-0.5f, 0.5f}, //front bottom right
-    Maths::Vec3f{-0.5f, 0.5f, 0.5f}, //front top left
-    Maths::Vec3f{ 0.5f, 0.5f, 0.5f}  //front top right
-};
-std::vector<std::array<int, 3>> cubeDrawOrder{ 
-    std::array<int, 3>{0,1,2}, //back face
-    std::array<int, 3>{1,2,3},
-
-    std::array<int, 3>{4,5,6}, //front face
-    std::array<int, 3>{5,6,7},
-
-    std::array<int, 3>{0,4,2}, //left face
-    std::array<int, 3>{2,4,6},
-
-    std::array<int, 3>{1,3,5}, //right face
-    std::array<int, 3>{3,7,5},
-
-    std::array<int, 3>{2,6,3}, //top face
-    std::array<int, 3>{3,6,7},
-
-    std::array<int, 3>{0,4,1}, //bottom face
-    std::array<int, 3>{1,4,5}
-};
-
 
 int main()
 {
@@ -118,31 +73,23 @@ int main()
     // Our actual software-renderer.
     Rasteriser rend(WIDTH,HEIGHT);
 
-    // sample object
-    Object square1{ squareVertices,squareDrawOrder };
-    square1.move(Maths::Vec3f{ 2.0f,0.0f,-4.0f }); 
+    // Load a mesh
+    Mesh cubeMesh("cube.obj");
 
-    Object square2{ squareVertices,squareDrawOrder };
-    square2.move(Maths::Vec3f{ -2.0f,0.0f,-4.0f }); 
+    // Create an object
+    Object cube(cubeMesh);
+    cube.move(Maths::Vec3f{0.0f,0.0f,-5.0f});
     
-    Object cube1{ cubeVertices,cubeDrawOrder };
-    cube1.move(Maths::Vec3f{ 0.0f,2.0f,-4.0f });
-    Object cube2{ cubeVertices,cubeDrawOrder };
-    cube2.move(Maths::Vec3f{ 0.0f,0.0f,-4.0f });
-    Object cube3{ cubeVertices,cubeDrawOrder };
-    cube3.move(Maths::Vec3f{ 0.0f,-2.0f,-4.0f });
-
-    bool running = true;
-
+    //frame rate stuff
     Timer timer{};
-    
     std::array<float, 20> times{};
     int index{ 0 };
     float frameAverage{ 0.0f };
 
+
     const bool* key_states = SDL_GetKeyboardState(NULL);
 
-    
+    bool running = true;
 
     while (running)
     {
@@ -233,18 +180,7 @@ int main()
         }
 
         // Draw the objects 
-        rend.drawObject(square1);
-        square1.rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 0.0f,1.0f,0.0f });
-        
-        rend.drawObject(square2);
-        square2.rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 1.0f,0.0f,0.0f });
-        
-        rend.drawObject(cube1);
-        cube1.rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 1.0f,0.0f,0.0f });
-        rend.drawObject(cube2,true);
-        cube2.rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 1.0f,1.0f,0.0f });
-        rend.drawObject(cube3);
-        cube3.rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 0.0f,1.0f,0.0f });
+        rend.drawObject(cube);
 
         // --------------------------------------------------
         // SENDING FRAMEBUFFER TO SDL
