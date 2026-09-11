@@ -34,7 +34,7 @@ namespace Maths {
 		Vec3f getCross(Vec3f v);
 
 		void transform(const Mat4& mat); // transforms the vect
-		void project(const Mat4& mat);
+		bool project(const Mat4& mat);
 
 		float& operator() (int index);
 		const float& operator() (int index) const;

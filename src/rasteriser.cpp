@@ -203,8 +203,9 @@ void Rasteriser::drawObject(Object& object, bool wireframe) {
     //then multiply the translation by the inverse
     Maths::Mat4 view = m_camera.getView();
 
+    
+    
     view.transpose3();
-
     view(0, 3) = -(view(0,0) * m_camera.getView()(0,3)
                  + view(0, 1) * m_camera.getView()(1, 3)
                  + view(0, 2) * m_camera.getView()(2, 3));  
@@ -216,6 +217,7 @@ void Rasteriser::drawObject(Object& object, bool wireframe) {
     view(2, 3) = -(view(2, 0) * m_camera.getView()(0, 3)
                  + view(2, 1) * m_camera.getView()(1, 3)
                  + view(2, 2) * m_camera.getView()(2, 3));
+
 
     total = total * object.getModel(); //model transformation
     total = view * total; //view transformation
@@ -237,47 +239,46 @@ void Rasteriser::drawObject(Object& object, bool wireframe) {
     const Mesh& mesh = object.getMesh();
 
     for (std::size_t i{ 0 }; i < mesh.getFaces().size(); i++) {
-        
+
         ////////////////////////////////////////////////////////// POSITIONS
-        positionVert1 = mesh.getPositions()[mesh.getFaces()[i][0][0] -1];
-        positionVert2 = mesh.getPositions()[mesh.getFaces()[i][1][0] -1]; 
-        positionVert3 = mesh.getPositions()[mesh.getFaces()[i][2][0] -1];
+        positionVert1 = mesh.getPositions()[mesh.getFaces()[i][0][0] - 1];
+        positionVert2 = mesh.getPositions()[mesh.getFaces()[i][1][0] - 1];
+        positionVert3 = mesh.getPositions()[mesh.getFaces()[i][2][0] - 1];
 
-        positionVert1.project(total);
-        positionVert2.project(total);
-        positionVert3.project(total);
-        ////////////////////////////////////////////////////////// TEXTURES
-        textureVert1 = mesh.getTexCoords()[mesh.getFaces()[i][0][1] -1];
-        textureVert2 = mesh.getTexCoords()[mesh.getFaces()[i][1][1] -1];
-        textureVert3 = mesh.getTexCoords()[mesh.getFaces()[i][2][1] -1];
-        //DO SOME TEXTURE TRANSFORMATION STUFF HERE
-        //NOT A CLUE IF THATS EVEN NEEDED
-        ////////////////////////////////////////////////////////// NORMALS
-        normalVert1 = mesh.getNormals()[mesh.getFaces()[i][0][2] -1];
-        normalVert2 = mesh.getNormals()[mesh.getFaces()[i][1][2] -1];
-        normalVert3 = mesh.getNormals()[mesh.getFaces()[i][2][2] -1];
-        //DO SOME NORMAL TRANSFORMATION STUFF HERE
-        //LIKELY MEANS TRANSFORM IT BY THE INVERSE OF PROJECT BUT WHO KNOWS REALLY
-        //////////////////////////////////////////////////////////
+        if (positionVert1.project(total) && positionVert2.project(total) && positionVert3.project(total)) { //project returns false if w < 0.001f (primitive clipping)
+            ////////////////////////////////////////////////////////// TEXTURES
+            textureVert1 = mesh.getTexCoords()[mesh.getFaces()[i][0][1] - 1];
+            textureVert2 = mesh.getTexCoords()[mesh.getFaces()[i][1][1] - 1];
+            textureVert3 = mesh.getTexCoords()[mesh.getFaces()[i][2][1] - 1];
+            //DO SOME TEXTURE TRANSFORMATION STUFF HERE
+            //NOT A CLUE IF THATS EVEN NEEDED
+            ////////////////////////////////////////////////////////// NORMALS
+            normalVert1 = mesh.getNormals()[mesh.getFaces()[i][0][2] - 1];
+            normalVert2 = mesh.getNormals()[mesh.getFaces()[i][1][2] - 1];
+            normalVert3 = mesh.getNormals()[mesh.getFaces()[i][2][2] - 1];
+            //DO SOME NORMAL TRANSFORMATION STUFF HERE
+            //LIKELY MEANS TRANSFORM IT BY THE INVERSE OF PROJECT BUT WHO KNOWS REALLY
+            //////////////////////////////////////////////////////////
 
-        this->drawTriangle( //we change the vertices from -1,1 to 0-1 coords before passing them
-            Maths::Vertex{ 
-            Maths::Vec3f{(positionVert1(0) + 1) / 2, (positionVert1(1) + 1) / 2, positionVert1(2) },
-            Maths::Vec3f{normalVert1(0),normalVert1(1),normalVert1(2)},
-            Maths::Vec2f{textureVert1(0),textureVert1(1)}},
+            this->drawTriangle( //we change the vertices from -1,1 to 0-1 coords before passing them
+                Maths::Vertex{
+                Maths::Vec3f{(positionVert1(0) + 1) / 2, (positionVert1(1) + 1) / 2, positionVert1(2)},
+                Maths::Vec3f{normalVert1(0),normalVert1(1),normalVert1(2)},
+                Maths::Vec2f{textureVert1(0),textureVert1(1)} },
 
-            Maths::Vertex{
-            Maths::Vec3f{(positionVert2(0) + 1) / 2, (positionVert2(1) + 1) / 2, positionVert2(2) },
-            Maths::Vec3f{normalVert2(0),normalVert2(1),normalVert2(2)},
-            Maths::Vec2f{textureVert2(0),textureVert2(1)} },
+                Maths::Vertex{
+                Maths::Vec3f{(positionVert2(0) + 1) / 2, (positionVert2(1) + 1) / 2, positionVert2(2)},
+                Maths::Vec3f{normalVert2(0),normalVert2(1),normalVert2(2)},
+                Maths::Vec2f{textureVert2(0),textureVert2(1)} },
 
-            Maths::Vertex{
-            Maths::Vec3f{(positionVert3(0) + 1) / 2, (positionVert3(1) + 1) / 2, positionVert3(2) },
-            Maths::Vec3f{normalVert3(0),normalVert3(1),normalVert3(2)},
-            Maths::Vec2f{textureVert3(0),textureVert3(1)} },
+                Maths::Vertex{
+                Maths::Vec3f{(positionVert3(0) + 1) / 2, (positionVert3(1) + 1) / 2, positionVert3(2)},
+                Maths::Vec3f{normalVert3(0),normalVert3(1),normalVert3(2)},
+                Maths::Vec2f{textureVert3(0),textureVert3(1)} },
 
-            wireframe);
-    }
+                wireframe);
+        }
+    }    
 }
 
 std::vector<std::uint32_t>& Rasteriser::getFrameBuffer() {

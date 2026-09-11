@@ -113,8 +113,12 @@ namespace Maths {
 		m_arr[2] = (mat(2, 0) * x) + (mat(2, 1) * y) + (mat(2, 2) * z) + mat(2, 3);
 	}
 
-	void Vec3f::project(const Mat4& mat) {
+	bool Vec3f::project(const Mat4& mat) {
 		double w = m_arr[0] * mat(3, 0) + m_arr[1] * mat(3, 1) + m_arr[2] * mat(3, 2) + mat(3, 3);
+
+		if (w < 0.01f) {
+			return false;
+		}
 
 		float x = m_arr[0];
 		float y = m_arr[1];
@@ -127,6 +131,8 @@ namespace Maths {
 		m_arr[0] /= w;
 		m_arr[1] /= w;
 		m_arr[2] /= w;
+
+		return true;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -175,22 +175,13 @@ where: f is 1/(tan(fov/2)), a is the aspect ratio, fn is the near cutoff, ff is 
 
 ----Things to fix----
 
--performance tanks when getting close to objects
-as in tanks so much it stops running
+-change how Vec3f Project works, as using a bool on a random function to check if it's valid is bad practice(I think)
 
--performance gets worse as we move to the left or right of the object
-this could be as when we let an object get closer to the "edge" of the view thrustrum it "stretches" due to perspective projection
-so it covers more pixels/area, this occurs when it's outside the screen too so it would keep increasing the amount of draw calls
-this could likely be fixed with some form of thrustrum culling when deciding to check if we should draw a triangle
+-an object at the edge of the screen can cause a line to be drawn at the opposite edge
 
 -some pixels are missing from within objects
 
 -rename edgeFunction, as it really calculates an area
-
--objects seem to "stretch" as they get closer to the screen
-likely a neccesary artifact of projection matrices but look into it
-
--an object at the edge of the screen can cause a line to be drawn at the opposite edge
 
 
 
@@ -203,6 +194,8 @@ something about having to transform them by the inverse
 
 -texture function
 this would include making sure Vec2f has all the functions it needs(likely just copy from Vec3f)
+
+-Clipping functionality, such that triangles don't just abruptly stop when passing the near plane
 
 -Some "scene" class or struct which holds and draws through all objects
 

@@ -81,10 +81,11 @@ int main()
 
     // Create an object
     Object tree(treeMesh);
-    tree.move(Maths::Vec3f{ 0.0f,0.0f,-50.0f });
+    tree.move(Maths::Vec3f{ 0.0f,-0.0f,-50.0f });
 
     Object cube(cubeMesh);
     cube.move(Maths::Vec3f{ 20.0f,0.0f,-50.0f });
+    cube.scale(Maths::Vec3f{ 5.0f,5.0f,5.0f });
 
     Object light(lightMesh);
     light.move(Maths::Vec3f{ -25.0f,5.0f,-50.0f });
@@ -92,7 +93,7 @@ int main()
 
     Object chair(chairMesh);
     chair.move(Maths::Vec3f{ 10.0f,0.0f,-50.0f });
-    chair.scale(Maths::Vec3f{ 5.0f,5.0f,5.0f });
+    chair.scale(Maths::Vec3f{ 10.0f,10.0f,10.0f });
 
     
     //frame rate stuff
@@ -196,9 +197,8 @@ int main()
 
         // Draw the objects 
         rend.drawObject(tree);
-        tree.rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{0.0f,1.0f,0.0f});
         rend.drawObject(cube);
-        rend.drawObject(light);
+        rend.drawObject(light,true);
         rend.drawObject(chair);
 
 
