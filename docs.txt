@@ -175,6 +175,9 @@ where: f is 1/(tan(fov/2)), a is the aspect ratio, fn is the near cutoff, ff is 
 
 ----Things to fix----
 
+-if rotating away from an object or moving to the sides, performance decreases
+this is likely due to triangles "covering" a larger area due to perspective projection and so many more "pixels" are being calculated
+
 -change how Vec3f Project works, as using a bool on a random function to check if it's valid is bad practice(I think)
 
 -an object at the edge of the screen can cause a line to be drawn at the opposite edge
