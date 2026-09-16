@@ -108,31 +108,9 @@ namespace Maths {
 		float y = m_arr[1];
 		float z = m_arr[2];
 
-		m_arr[0] = (mat(0, 0) * x) + (mat(0, 1) * y) + (mat(0, 2) * z) + mat(0,3);
-		m_arr[1] = (mat(1, 0) * x) + (mat(1, 1) * y) + (mat(1, 2) * z) + mat(1, 3);
-		m_arr[2] = (mat(2, 0) * x) + (mat(2, 1) * y) + (mat(2, 2) * z) + mat(2, 3);
-	}
-
-	bool Vec3f::project(const Mat4& mat) {
-		double w = m_arr[0] * mat(3, 0) + m_arr[1] * mat(3, 1) + m_arr[2] * mat(3, 2) + mat(3, 3);
-
-		if (w < 0.01f) {
-			return false;
-		}
-
-		float x = m_arr[0];
-		float y = m_arr[1];
-		float z = m_arr[2];
-
 		m_arr[0] = (mat(0, 0) * x) + (mat(0, 1) * y) + (mat(0, 2) * z) + mat(0, 3);
 		m_arr[1] = (mat(1, 0) * x) + (mat(1, 1) * y) + (mat(1, 2) * z) + mat(1, 3);
 		m_arr[2] = (mat(2, 0) * x) + (mat(2, 1) * y) + (mat(2, 2) * z) + mat(2, 3);
-
-		m_arr[0] /= w;
-		m_arr[1] /= w;
-		m_arr[2] /= w;
-
-		return true;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

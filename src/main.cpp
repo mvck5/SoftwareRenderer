@@ -10,6 +10,7 @@
 constexpr int WIDTH = 1280;
 constexpr int HEIGHT = 720;
 
+
 int main()
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
@@ -73,11 +74,14 @@ int main()
     // Our actual software-renderer.
     Rasteriser rend(WIDTH,HEIGHT);
 
+    
+    
     // Load a mesh
     Mesh treeMesh("tree.obj");
     Mesh cubeMesh("cube.obj");
     Mesh lightMesh("light.obj");
     Mesh chairMesh("chair.obj");
+    Mesh cabinMesh("cabin.obj");
 
     // Create an object
     Object tree(treeMesh);
@@ -94,7 +98,9 @@ int main()
     Object chair(chairMesh);
     chair.move(Maths::Vec3f{ 10.0f,0.0f,-50.0f });
     chair.scale(Maths::Vec3f{ 10.0f,10.0f,10.0f });
-
+    
+    Object cabin(cabinMesh);
+    cabin.move(Maths::Vec3f{0.0f,-10.0f,-50.0f});
     
     //frame rate stuff
     Timer timer{};
@@ -196,11 +202,13 @@ int main()
         }
 
         // Draw the objects 
-        rend.drawObject(tree);
         rend.drawObject(cube);
-        rend.drawObject(light,true);
+        rend.drawObject(tree);
         rend.drawObject(chair);
-
+        rend.drawObject(light);
+        rend.drawObject(cabin);
+        cabin.rotate(Maths::degreeToRadian(0.5f),Maths::Vec3f{0.0f,1.0f,0.0f});
+       
 
         // --------------------------------------------------
         // SENDING FRAMEBUFFER TO SDL

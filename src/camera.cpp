@@ -36,3 +36,7 @@ float Camera::getNear() {
 float Camera::getFar() {
 	return m_far;
 }
+
+Maths::Vec3f Camera::getPosition() {
+	return Maths::Vec3f{m_view(0,3),m_view(1,3),m_view(2,3) };
+}

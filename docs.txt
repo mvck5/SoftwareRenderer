@@ -1,112 +1,31 @@
-----Local Space----
-the objects vertices coordinates relative to it's own origin
-
-the origin is arbituary but usually at the "centre" of the object
-
-
-----World Space---- (model matrix)
-the global coordinates of the whole scene
-
-vertex position relative to the "world" origin
-world origin is (0,0,0)
-
-the object's position in space, as well as it's scale and rotation are stored in the model matrix
-
-
-----View Space---- (view matrix)
-the scene viewed from the perspective of the camera
-
-we transform an object's position in "world" space to "view" space via the view matrix
-
-	
-----Clip/Screen Space---- (projection matrix)
-viewing frustrum from "camera" which contains some "canvas"
-
-frustrum extends from camera point to meet at the canvas's 4 corners and then extends 
-until some "end" is reached where end is defined as a distance
-
-if an object is within the frustrum it can be translated to clip space
-
-line from position of objects vertex to camera
-
-where line intersects with canvas is the clip space of the vertex
-
-the "projected" coordinate of the vertex can be found with p.x = x/z (same goes for y)
-where z is the "depth" coordinate
-
-the "projected" coordinate can be translated to clip space if it's within the range of the canvas
-example: the canvas's range for x is -1<x<1 and the projected coordinate's x value is 0.5,
-as such it's within the canvas's range and can be translated to clip space
-
-If the projected coordinate is not within the canvas's range then the line does not intersect
-with the canvas, the vertex is not within the frustrum, and cannot be translated
-
-
-----Normalized Device Coordinates----
-normalise clip space x,y coordinates to be in the range 0-1 such as to be
-applicable across any window size
-
-
-----Raster Space----
-change coordinates to be integers within the size of the screen
-example: 1920x1080
-
-we would also sort through "depth" before drawing in order to solve the visibility problem,
-one solution is a z buffer
-
-
-----Left hand vs right hand coordinates----
-negate x(or z) value to switch hand, this also inverts the normal
-the normal is therefore opposite between hands or the image is opposite but not both
-
-Our coordinate system will be right handed, and matrices will be in column-major order
-
-
-
-
-----General process----
-Local space -> (model matrix) World space -> (view matrix) View space -> (projection matrix) Clip space -> (normalise coords) Screen space
-
-clip vector = projection matrix * view matrix * model matrix * local vector 
-
-we divide the coords by w in the "project" vector function so we don't need to do it in clip space
-
-we actually end up with normalised device coordinates between -1<x<1 after the "project" vector function
-
-the model matrix and the view matrix can be multiplied together, but the resulting vector should then be projected on,
-as it's more efficient to only have to calculate the w and thus a 4x4 matrix once, where as the other affine transformations
-can be left as 3x3 transformations
-
-local vector * model matrix, then * view matrix, then * projection matrix
-
-we then transform the vector into raster coordinates(example: -1,1 to 0,1080) (float/double to int)
-
-pixel in framebuffer is changed to the closest raster coordinate (decided by the depthbuffer)
-
-repeat for all pixels, pass framebuffer to window and draw
-
-///////////////// we don't technically transform the object's vertices, we transform the object's local coordinate system(with a matrix) in world space
-(this is also true for view space and projection space), although in practice we translate each individual vertex
-
-model matrix is really the "local to world" matrix
-
-view matrix is really the "world to camera" matrix 
-(or the inverse of the camera to world matrix, which in this case can be calculated using the transpose)
-
-once everything is in raster coordinates, we apply the rasterisation algorithm between points to draw lines, then triangles
-(or just lines if it's wireframe)
-
+----General information----
+coordinate system is right handed
+matrices are in column-major order
+winding is 
 
 
 
 ----Rendering pipeline----
--Take in vertex data
--Sort vertex data
--pass triangle to vertex shader
--vertex shader does stuff
-////////// Likely this is where we'd do our "culling" optimisations" //////////
--pass triangle to fragment shader
--fragment shader does stuff
+Load in vertex and index data
+create model-view-projection matrix from object's model, cameras view and general projection matrices
+create normal matrix (usually a transpose of the upper left 3x3, if non uniform scaling used then we have to use the normal inverse)
+for each triangle:
+-for each vertex in triangle: pass vertex to vertex shader, along with the model-view-projection matrix
+--VERTEX SHADER--
+transform vertex attributes
+Position: by model-view-projection matrix
+Normal: by normal matrix
+Texture: no transformation
+transform by projection matrix without perspective divide(don't divide by w) to get to clip space
+perform clipping(for now do a basic check if x,y,z are within the absolute value of w and w is greater than 0)	
+perform perspective divide(divide by w) to get to NDC(normalised device coordinates)
+viewport transform(goes from -1,1 to 0,1)
+-pass transformed triangle to rasteriser
+--RASTERISER--
+determine which pixels are covered by the triangle
+compute barycentric coordinates
+-for each "fragment"(pixel as we do no anti-aliasing) pass to fragment shader, along with any relevant texture and lighting data
+--FRAGMENT SHADER--
 
 
 
@@ -123,7 +42,6 @@ where: Tx,Ty,Tz are scalars for some vector multiplication
 
 
 Rotation matrices:
-
 -rotate about x
 1			0			0			0
 0			cos			-sin		0 
@@ -152,7 +70,6 @@ where: u is some unit vector
 
 
 Translation matrix:
-
 1	0	0	Tx
 0	1	0	Ty 
 0	0	1	Tz
@@ -162,7 +79,6 @@ where: Tx,Ty,Tz are translations for their respective coordinates
 
 
 Projection matrix:
-
 f/a				0				0				0
 0				f				0				0
 0				0				(fn+ff)/(fn-ff) (2*fn*ff)/(fn-ff)
@@ -173,48 +89,38 @@ where: f is 1/(tan(fov/2)), a is the aspect ratio, fn is the near cutoff, ff is 
 
 
 
+-------------------------------- IN DEV --------------------------------
+
 ----Things to fix----
-
--if rotating away from an object or moving to the sides, performance decreases
-this is likely due to triangles "covering" a larger area due to perspective projection and so many more "pixels" are being calculated
-
--change how Vec3f Project works, as using a bool on a random function to check if it's valid is bad practice(I think)
-
--an object at the edge of the screen can cause a line to be drawn at the opposite edge
 
 -some pixels are missing from within objects
 
 -rename edgeFunction, as it really calculates an area
 
 
-
-
 ----Features to implement----
-
--be able to transform normals
-this should happen each time an object is transformed
-something about having to transform them by the inverse
 
 -texture function
 this would include making sure Vec2f has all the functions it needs(likely just copy from Vec3f)
 
--Clipping functionality, such that triangles don't just abruptly stop when passing the near plane
+-frustrum culling
+this would involve creating AABB(axis aligned bounding box) by which we can check if all 6 vertices are contained within the frustrum
+if all 6 vertices of the bounding box are not within the frustrum we wouldn't draw the object
+this would also be useful for collision
+
+-vertex and fragment shader pipelines
+vertex should take in some vertex and model-view matrix
+fragment should take in the projected vertex
 
 -Some "scene" class or struct which holds and draws through all objects
 
 -object class/rasteriser object list delete function (maybe, idk this would likely require sending everything to the heap
 which could reduce performance for no real gain)
 
--obj loader(we need to be able to display textures/uv maps and link verteces together, for now ignore materials)
-
 -shading/shaders(at the very least some form of diffuse and specular lighting)
-
--vertex and fragment shader pipline
 
 -way to resize screen, while also changing the frame and z buffers
 likely just resizing the buffers on window change using sdl3's event system
-
-
 
 
 ----Optimisations to implement----
@@ -232,7 +138,6 @@ as integer operations are cheaper to perform
 
 -various culling techniques:
 frustrum - discard objects outside the camera’s viewing volume
-back face - discard polygons facing away from the camera
 occlusion - discard objects completely hidden behind other geometry
 bounding box(technically already done, but could be optimised) - test an object’s bounding box before processing its detailed geometry
 near/far - remove geometry outside the camera’s depth range

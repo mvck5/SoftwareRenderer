@@ -197,33 +197,59 @@ void Rasteriser::drawTriangle(Maths::Vertex p1, Maths::Vertex p2, Maths::Vertex 
 
 void Rasteriser::drawObject(Object& object, bool wireframe) {
 
-    Maths::Mat4 total{};
+    // setup
+    //////////////////////////////////////////////// STEP 1: CREATE MODEL-VIEW-PROJECTION MATRIX
+    //////////////////////////////////////////////// STEP 2: CREATE NORMAL MATRIX (inverse of model)
+    //////////////////////////////////////////////// SETP 3: FRUSTRUM CULLING //////////////////////////////////////////////// needs to be implemented 
+    // Vertex shader
+    //////////////////////////////////////////////// STEP 4: TRANSFORM VERTEX ATTRIBUTES
+    //////////////////////////////////////////////// STEP 5: CLIPPING
+    //////////////////////////////////////////////// STEP 6: PERSPECTIVE DIVIDE
+    //////////////////////////////////////////////// STEP 7: VIEWPORT TRANSFORM
+    // Rasteriser
+    //////////////////////////////////////////////// STEP 8: DETERMINE WHICH PIXELS ARE COVERED
+    //////////////////////////////////////////////// STEP 9: CALCULATE BARYCENTRIC COORDINATES
+    // Fragment shader
+    //////////////////////////////////////////////// STEP 10: 
 
-    //we need thie inverse of the camera and as it has only undergone affine transformations it's quicker to find the inverse
-    //then multiply the translation by the inverse
+
+
+
+
+    Maths::Mat4 modelViewProjection{};
+    Maths::Mat4 normalMatrix{};
+
+    //we need the inverse of the camera and as it has only undergone affine transformations it's quicker to use the transpose
     Maths::Mat4 view = m_camera.getView();
-
-    
-    
     view.transpose3();
-    view(0, 3) = -(view(0,0) * m_camera.getView()(0,3)
-                 + view(0, 1) * m_camera.getView()(1, 3)
-                 + view(0, 2) * m_camera.getView()(2, 3));  
+    view(0, 3) = -(view(0, 0) * m_camera.getView()(0, 3)
+        + view(0, 1) * m_camera.getView()(1, 3)
+        + view(0, 2) * m_camera.getView()(2, 3));
 
     view(1, 3) = -(view(1, 0) * m_camera.getView()(0, 3)
-                 + view(1, 1) * m_camera.getView()(1, 3)
-                 + view(1, 2) * m_camera.getView()(2, 3));
+        + view(1, 1) * m_camera.getView()(1, 3)
+        + view(1, 2) * m_camera.getView()(2, 3));
 
     view(2, 3) = -(view(2, 0) * m_camera.getView()(0, 3)
-                 + view(2, 1) * m_camera.getView()(1, 3)
-                 + view(2, 2) * m_camera.getView()(2, 3));
+        + view(2, 1) * m_camera.getView()(1, 3)
+        + view(2, 2) * m_camera.getView()(2, 3));
 
 
-    total = total * object.getModel(); //model transformation
-    total = view * total; //view transformation
-    total.project(m_camera.getFov(), m_camera.getAspectRatio(), m_camera.getNear(), m_camera.getFar()); //projection transformation
+    modelViewProjection = modelViewProjection * object.getModel(); //model transformation
+
+    normalMatrix = modelViewProjection; //calculate the normal matrix so it's in "world space" (without translation)
+    normalMatrix(0, 3) = 0.0f;
+    normalMatrix(1, 3) = 0.0f;
+    normalMatrix(2, 3) = 0.0f;
+
+    modelViewProjection = view * modelViewProjection; //view transformation
+
+    modelViewProjection.project(m_camera.getFov(), m_camera.getAspectRatio(), m_camera.getNear(), m_camera.getFar()); //projection transformation
+
+    
 
 
+    
     Maths::Vec3f positionVert1;
     Maths::Vec3f positionVert2;
     Maths::Vec3f positionVert3;
@@ -231,65 +257,120 @@ void Rasteriser::drawObject(Object& object, bool wireframe) {
     Maths::Vec3f normalVert1;
     Maths::Vec3f normalVert2;
     Maths::Vec3f normalVert3;
+    Maths::Vec3f surfaceNormal{};
+
+    Maths::Vec3f temp1;
+    Maths::Vec3f temp2;
+    Maths::Vec3f temp3;
 
     Maths::Vec2f textureVert1;
     Maths::Vec2f textureVert2;
     Maths::Vec2f textureVert3;
 
+    double w1{};
+    double w2{};
+    double w3{};
+
     const Mesh& mesh = object.getMesh();
 
     for (std::size_t i{ 0 }; i < mesh.getFaces().size(); i++) {
 
-        ////////////////////////////////////////////////////////// POSITIONS
         positionVert1 = mesh.getPositions()[mesh.getFaces()[i][0][0] - 1];
         positionVert2 = mesh.getPositions()[mesh.getFaces()[i][1][0] - 1];
         positionVert3 = mesh.getPositions()[mesh.getFaces()[i][2][0] - 1];
 
-        if (positionVert1.project(total) && positionVert2.project(total) && positionVert3.project(total)) { //project returns false if w < 0.001f (primitive clipping)
+        w1 = positionVert1(0) * modelViewProjection(3, 0) + positionVert1(1) * modelViewProjection(3, 1) 
+            + positionVert1(2) * modelViewProjection(3, 2) + modelViewProjection(3, 3);
+        w2 = positionVert2(0) * modelViewProjection(3, 0) + positionVert2(1) * modelViewProjection(3, 1) 
+            + positionVert2(2) * modelViewProjection(3, 2) + modelViewProjection(3, 3);
+        w3 = positionVert3(0) * modelViewProjection(3, 0) + positionVert3(1) * modelViewProjection(3, 1) 
+            + positionVert3(2) * modelViewProjection(3, 2) + modelViewProjection(3, 3);
 
-            if (positionVert1(0) > -1 && positionVert1(0) < 1 && positionVert2(0) > -1 && positionVert2(0) < 1 && positionVert3(0) > -1 && positionVert3(0) < 1) {
-
-                ////////////////////////////////////////////////////////////////
-                //                                                            //
-                // IMPLEMENT PROPER CLIPPING HERE (and for next if statement) //
-                //                                                            //
-                ////////////////////////////////////////////////////////////////
-
-                if (positionVert1(1) > -1 && positionVert1(1) < 1 && positionVert2(1) > -1 && positionVert2(1) < 1 && positionVert3(1) > -1 && positionVert3(1) < 1) {
-                    ////////////////////////////////////////////////////////// TEXTURES
-                    textureVert1 = mesh.getTexCoords()[mesh.getFaces()[i][0][1] - 1];
-                    textureVert2 = mesh.getTexCoords()[mesh.getFaces()[i][1][1] - 1];
-                    textureVert3 = mesh.getTexCoords()[mesh.getFaces()[i][2][1] - 1];
-                    //DO SOME TEXTURE TRANSFORMATION STUFF HERE
-                    //NOT A CLUE IF THATS EVEN NEEDED
-                    ////////////////////////////////////////////////////////// NORMALS
-                    normalVert1 = mesh.getNormals()[mesh.getFaces()[i][0][2] - 1];
-                    normalVert2 = mesh.getNormals()[mesh.getFaces()[i][1][2] - 1];
-                    normalVert3 = mesh.getNormals()[mesh.getFaces()[i][2][2] - 1];
-                    //DO SOME NORMAL TRANSFORMATION STUFF HERE
-                    //LIKELY MEANS TRANSFORM IT BY THE INVERSE OF PROJECT BUT WHO KNOWS REALLY
-                    //////////////////////////////////////////////////////////
-
-                    this->drawTriangle( //we change the vertices from -1,1 to 0-1 coords before passing them
-                        Maths::Vertex{
-                        Maths::Vec3f{(positionVert1(0) + 1) / 2, (positionVert1(1) + 1) / 2, positionVert1(2)},
-                        Maths::Vec3f{normalVert1(0),normalVert1(1),normalVert1(2)},
-                        Maths::Vec2f{textureVert1(0),textureVert1(1)} },
-
-                        Maths::Vertex{
-                        Maths::Vec3f{(positionVert2(0) + 1) / 2, (positionVert2(1) + 1) / 2, positionVert2(2)},
-                        Maths::Vec3f{normalVert2(0),normalVert2(1),normalVert2(2)},
-                        Maths::Vec2f{textureVert2(0),textureVert2(1)} },
-
-                        Maths::Vertex{
-                        Maths::Vec3f{(positionVert3(0) + 1) / 2, (positionVert3(1) + 1) / 2, positionVert3(2)},
-                        Maths::Vec3f{normalVert3(0),normalVert3(1),normalVert3(2)},
-                        Maths::Vec2f{textureVert3(0),textureVert3(1)} },
-
-                        wireframe);
-                }
-            }
+        if (w1 < 0.01f || w2 < 0.01f || w3 < 0.01f) { // stops divide by 0
+           continue;
         }
+
+        positionVert1.transform(modelViewProjection);
+        positionVert2.transform(modelViewProjection);
+        positionVert3.transform(modelViewProjection);
+
+        
+        //basic clipping, ideally this should use a line or triangle clipping algorithm where we redraw to the edge of the screen
+        if (!(positionVert1(0) > -w1 && positionVert1(0) < w1 && positionVert2(0) > -w2 && positionVert2(0) < w2 && positionVert3(0) > -w3 && positionVert3(0) < w3)) {
+            continue;
+        }
+        if (!(positionVert1(1) > -w1 && positionVert1(1) < w1 && positionVert2(1) > -w2 && positionVert2(1) < w2 && positionVert3(1) > -w3 && positionVert3(1) < w3)) {
+            continue;
+        }
+        if (positionVert1(2) > m_camera.getFar() && positionVert1(2) < m_camera.getNear()
+            && positionVert2(2) > m_camera.getFar() && positionVert2(2) < m_camera.getNear()
+            && positionVert3(2) > m_camera.getFar() && positionVert3(2) < m_camera.getNear()) {
+            continue;
+        }
+
+
+
+        normalVert1 = mesh.getNormals()[mesh.getFaces()[i][0][2] - 1];
+        normalVert2 = mesh.getNormals()[mesh.getFaces()[i][1][2] - 1];
+        normalVert3 = mesh.getNormals()[mesh.getFaces()[i][2][2] - 1];
+
+        normalVert1.transform(normalMatrix);
+        normalVert2.transform(normalMatrix);
+        normalVert3.transform(normalMatrix);
+
+        surfaceNormal = normalVert1 + normalVert2 + normalVert3;
+        surfaceNormal.normalise();
+
+        temp1 = mesh.getPositions()[mesh.getFaces()[i][0][0] - 1];
+        temp1.transform(object.getModel());
+        temp2 = mesh.getPositions()[mesh.getFaces()[i][1][0] - 1];
+        temp2.transform(object.getModel());
+        temp3 = mesh.getPositions()[mesh.getFaces()[i][2][0] - 1];
+        temp3.transform(object.getModel());
+
+        //backface culling
+        if (surfaceNormal.getDot((m_camera.getPosition() - ((temp1 + temp2 + temp3) / 3))) < 0.0f) {
+            continue;
+        }
+
+
+        textureVert1 = mesh.getTexCoords()[mesh.getFaces()[i][0][1] - 1];
+        textureVert2 = mesh.getTexCoords()[mesh.getFaces()[i][1][1] - 1];
+        textureVert3 = mesh.getTexCoords()[mesh.getFaces()[i][2][1] - 1];
+        //DO SOME TEXTURE TRANSFORMATION STUFF HERE
+        //NOT A CLUE IF THATS EVEN NEEDED
+
+
+        //perspective divide
+        positionVert1(0) /= w1;
+        positionVert1(1) /= w1;
+        positionVert1(2) /= w1;
+
+        positionVert2(0) /= w2;
+        positionVert2(1) /= w2;
+        positionVert2(2) /= w2;
+
+        positionVert3(0) /= w3;
+        positionVert3(1) /= w3;
+        positionVert3(2) /= w3;
+
+        this->drawTriangle( //we change the vertices from -1,1 to 0-1 coords before passing them
+            Maths::Vertex{
+            Maths::Vec3f{(positionVert1(0) + 1) / 2, (positionVert1(1) + 1) / 2, positionVert1(2)},
+            Maths::Vec3f{normalVert1(0),normalVert1(1),normalVert1(2)},
+            Maths::Vec2f{textureVert1(0),textureVert1(1)} },
+
+            Maths::Vertex{
+            Maths::Vec3f{(positionVert2(0) + 1) / 2, (positionVert2(1) + 1) / 2, positionVert2(2)},
+            Maths::Vec3f{normalVert2(0),normalVert2(1),normalVert2(2)},
+            Maths::Vec2f{textureVert2(0),textureVert2(1)} },
+
+            Maths::Vertex{
+            Maths::Vec3f{(positionVert3(0) + 1) / 2, (positionVert3(1) + 1) / 2, positionVert3(2)},
+            Maths::Vec3f{normalVert3(0),normalVert3(1),normalVert3(2)},
+            Maths::Vec2f{textureVert3(0),textureVert3(1)} },
+
+            wireframe);
     }    
 }
 

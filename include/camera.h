@@ -20,4 +20,5 @@ public:
 	float getAspectRatio();
 	float getNear();
 	float getFar();
+	Maths::Vec3f getPosition();
 };
