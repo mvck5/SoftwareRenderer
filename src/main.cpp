@@ -6,6 +6,7 @@
 #include "object.h"
 #include "timer.h"
 #include "mesh.h"
+#include "texture.h"
 
 constexpr int WIDTH = 1280;
 constexpr int HEIGHT = 720;
@@ -73,34 +74,18 @@ int main()
 
     // Our actual software-renderer.
     Rasteriser rend(WIDTH,HEIGHT);
-
-    
     
     // Load a mesh
-    Mesh treeMesh("tree.obj");
     Mesh cubeMesh("cube.obj");
-    Mesh lightMesh("light.obj");
-    Mesh chairMesh("chair.obj");
-    Mesh cabinMesh("cabin.obj");
 
-    // Create an object
-    Object tree(treeMesh);
-    tree.move(Maths::Vec3f{ 0.0f,-0.0f,-50.0f });
+    // Load a texture
+    Texture crateTex("container.jpg");
 
-    Object cube(cubeMesh);
-    cube.move(Maths::Vec3f{ 20.0f,0.0f,-50.0f });
-    cube.scale(Maths::Vec3f{ 5.0f,5.0f,5.0f });
+    //create an object
+    Object cube(cubeMesh,crateTex);
+    cube.move(Maths::Vec3f{ 0.0f,0.0f,-5.0f });
 
-    Object light(lightMesh);
-    light.move(Maths::Vec3f{ -25.0f,5.0f,-50.0f });
-    light.scale(Maths::Vec3f{ 0.7,0.7f,0.7f });
 
-    Object chair(chairMesh);
-    chair.move(Maths::Vec3f{ 10.0f,0.0f,-50.0f });
-    chair.scale(Maths::Vec3f{ 10.0f,10.0f,10.0f });
-    
-    Object cabin(cabinMesh);
-    cabin.move(Maths::Vec3f{0.0f,-10.0f,-50.0f});
     
     //frame rate stuff
     Timer timer{};
@@ -108,8 +93,9 @@ int main()
     int index{ 0 };
     float frameAverage{ 0.0f };
 
-
+    //movement stuff
     const bool* key_states = SDL_GetKeyboardState(NULL);
+    float speed{ 0.1 };
 
     bool running = true;
 
@@ -138,34 +124,34 @@ int main()
         key_states = SDL_GetKeyboardState(NULL);
 
         if (key_states[SDL_SCANCODE_W]) {
-            rend.getCamera().move(Maths::Vec3f{0.0f,0.0f,-0.2f});
+            rend.getCamera().move(Maths::Vec3f{0.0f,0.0f,-speed });
         }
         if (key_states[SDL_SCANCODE_A]) {
-            rend.getCamera().move(Maths::Vec3f{ -0.2f,0.0f,0.0f });
+            rend.getCamera().move(Maths::Vec3f{ -speed,0.0f,0.0f });
         }
         if (key_states[SDL_SCANCODE_S]) {
-            rend.getCamera().move(Maths::Vec3f{ 0.0f,0.0f,0.2f });
+            rend.getCamera().move(Maths::Vec3f{ 0.0f,0.0f,speed });
         }
         if (key_states[SDL_SCANCODE_D]) {
-            rend.getCamera().move(Maths::Vec3f{ 0.2f,0.0f,0.0f });
+            rend.getCamera().move(Maths::Vec3f{ speed,0.0f,0.0f });
         }
         if (key_states[SDL_SCANCODE_Q]) {
-            rend.getCamera().move(Maths::Vec3f{ 0.0f,0.2f,0.0f });
+            rend.getCamera().move(Maths::Vec3f{ 0.0f,speed,0.0f });
         }
         if (key_states[SDL_SCANCODE_E]) {
-            rend.getCamera().move(Maths::Vec3f{ 0.0f,-0.2f,0.0f });
+            rend.getCamera().move(Maths::Vec3f{ 0.0f,-speed,0.0f });
         }
         if (key_states[SDL_SCANCODE_T]) {
-            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 1.0f,0.0f,0.0f });
+            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ speed,0.0f,0.0f });
         }
         if (key_states[SDL_SCANCODE_G]) {
-            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ -1.0f,0.0f,0.0f });
+            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ -speed,0.0f,0.0f });
         }
         if (key_states[SDL_SCANCODE_F]) {
-            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 0.0f,1.0f,0.0f });
+            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 0.0f,speed,0.0f });
         }
         if (key_states[SDL_SCANCODE_H]) {
-            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 0.0f,-1.0f,0.0f });
+            rend.getCamera().rotate(Maths::degreeToRadian(1.0f), Maths::Vec3f{ 0.0f,-speed,0.0f });
         }
         
        
@@ -203,11 +189,7 @@ int main()
 
         // Draw the objects 
         rend.drawObject(cube);
-        rend.drawObject(tree);
-        rend.drawObject(chair);
-        rend.drawObject(light);
-        rend.drawObject(cabin);
-        cabin.rotate(Maths::degreeToRadian(0.5f),Maths::Vec3f{0.0f,1.0f,0.0f});
+        cube.rotate(Maths::degreeToRadian(0.1f), Maths::Vec3f{0.2f,0.2f,0.2f});
        
 
         // --------------------------------------------------

@@ -3,6 +3,7 @@
 #include <array>
 #include "maths.h"
 #include "mesh.h"
+#include "texture.h"
 
 //vertices and draw order are references so that we only have to have the memory allocated for an object once regardless of it's instances
 //refer to instancing
@@ -10,8 +11,9 @@ class Object {
 private:
 	const Mesh& m_mesh;
 	Maths::Mat4 m_model;
+	const Texture& m_texture;
 public:
-	Object(const Mesh& mesh);
+	Object(const Mesh& mesh, const Texture& texture);
 
 	void move(Maths::Vec3f vec);
 	void rotate(float angle, Maths::Vec3f vec); // angle is in radians
@@ -19,4 +21,5 @@ public:
 
 	const Mesh& getMesh();
 	const Maths::Mat4& getModel();
+	const Texture& getTexture();
 };

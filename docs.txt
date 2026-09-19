@@ -2,7 +2,8 @@
 coordinate system is right handed
 matrices are in column-major order
 winding is 
-
+coordinates start in the bottom left
+only object files supported are obj
 
 
 ----Rendering pipeline----
@@ -30,63 +31,6 @@ compute barycentric coordinates
 
 
 
-----Matrices----
-
-Scaling matrix:
-Tx	0	0	0
-0	Ty	0	0 
-0	0	Tz	0
-0	0	0	1
-
-where: Tx,Ty,Tz are scalars for some vector multiplication
-
-
-Rotation matrices:
--rotate about x
-1			0			0			0
-0			cos			-sin		0 
-0			sin			cos			0
-0			0			0			1
-
--rotate about y
-cos			0			0			sin
-0			1			0			0 
-0			0			1			0
--sin		0			0			cos
-
--rotate about z
-cos			-sin		0			0
-sin			cos			0			0 
-0			0			1			0
-0			0			0			1
-
--rotation around axis u = (x,y,z) (this mostly solves gimble lock although to fully solve it quaternions should be used)
-x^2(1-cos)+cos				xy(1-cos)-zsin				xz(1-cos)+ysin				0
-xy(1-cos)+zsin				y^2(1-cos)+cos				yz(1-cos)-xsin				0 
-xz(1-cos)-ysin				yz(1-cos)+xsin				z^2(1-cos)+cos				0
-0							0							0							1
-
-where: u is some unit vector
-
-
-Translation matrix:
-1	0	0	Tx
-0	1	0	Ty 
-0	0	1	Tz
-0	0	0	1
-
-where: Tx,Ty,Tz are translations for their respective coordinates
-
-
-Projection matrix:
-f/a				0				0				0
-0				f				0				0
-0				0				(fn+ff)/(fn-ff) (2*fn*ff)/(fn-ff)
-0				0				-1				0
-
-where: f is 1/(tan(fov/2)), a is the aspect ratio, fn is the near cutoff, ff is the far cutoff
-
-
 
 
 -------------------------------- IN DEV --------------------------------
@@ -101,12 +45,14 @@ where: f is 1/(tan(fov/2)), a is the aspect ratio, fn is the near cutoff, ff is 
 ----Features to implement----
 
 -texture function
-this would include making sure Vec2f has all the functions it needs(likely just copy from Vec3f)
+We would need to be able to read from a bmp get the colour of the image at that coordinate
+store the colour in some vector until each colour is read, as well as the width and the height of the texture
+A bmp can support both 24 and 32 bit colour info(rgb vs rgba), we should support both where 24 bits is given an alpha channel of 255
+note that we can also support other file formats but they're much harder
 
--frustrum culling
-this would involve creating AABB(axis aligned bounding box) by which we can check if all 6 vertices are contained within the frustrum
-if all 6 vertices of the bounding box are not within the frustrum we wouldn't draw the object
-this would also be useful for collision
+
+
+-better clipping algorithm where we redraw a triangle if a vertex is not on screen
 
 -vertex and fragment shader pipelines
 vertex should take in some vertex and model-view matrix
@@ -136,11 +82,18 @@ not entirely sure this is possible or more efficient though
 -possibly change the triangleDraw to use integers instead of floating point numbers
 as integer operations are cheaper to perform
 
--various culling techniques:
+--various culling techniques:
 frustrum - discard objects outside the camera’s viewing volume
+this would involve creating AABB(axis aligned bounding box) by which we can check if all 6 vertices are contained within the frustrum
+if all 6 vertices of the bounding box are not within the frustrum we wouldn't draw the object
+this would also be useful for collision
+
 occlusion - discard objects completely hidden behind other geometry
+
 bounding box(technically already done, but could be optimised) - test an object’s bounding box before processing its detailed geometry
+
 near/far - remove geometry outside the camera’s depth range
+
 screen space - clip primitives against the viewport to avoid unnecessary rasterisation
 
 -Tiling

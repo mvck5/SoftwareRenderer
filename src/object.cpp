@@ -1,8 +1,8 @@
 #include "object.h"
 #include <iostream>
 
-Object::Object(const Mesh& mesh):
-	m_mesh{ mesh }, m_model{ Maths::Mat4{} } {
+Object::Object(const Mesh& mesh, const Texture& texture):
+	m_mesh{ mesh }, m_model{ Maths::Mat4{} }, m_texture{ texture } {
 }
 
 void Object::move(Maths::Vec3f vec) {
@@ -23,4 +23,8 @@ const Mesh& Object::getMesh() {
 
 const Maths::Mat4& Object::getModel() {
 	return m_model;
+}
+
+const Texture& Object::getTexture() {
+	return m_texture;
 }

@@ -94,6 +94,8 @@ namespace Maths {
 		Vec3f position{};
 		Vec3f normal{};
 		Vec2f texCoord{};
+
+		float invW;
 	};
 
 

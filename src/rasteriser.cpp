@@ -23,179 +23,131 @@ void Rasteriser::drawPixel(Maths::RasterPoint p, std::uint32_t colour) {
     }
 }
 
-void Rasteriser::drawLine(Maths::Vertex p1, Maths::Vertex p2, std::uint32_t colour) {
 
-    Maths::RasterPoint point1{ static_cast<int>(p1.position(0) * m_width),static_cast<int>(p1.position(1) * m_height),p1.position(2) };
-    Maths::RasterPoint point2{ static_cast<int>(p2.position(0) * m_width),static_cast<int>(p2.position(1) * m_height),p2.position(2) };
+
+void Rasteriser::drawTriangle(Maths::Vertex p1, Maths::Vertex p2, Maths::Vertex p3, const Texture& texture) {
+
+    std::array<int, 6> arr{ 
+        static_cast<int>(p1.position(0) * m_width), 
+        static_cast<int>(p2.position(0) * m_width),
+        static_cast<int>(p3.position(0) * m_width),
+        static_cast<int>(p1.position(1) * m_height),
+        static_cast<int>(p2.position(1) * m_height),
+        static_cast<int>(p3.position(1) * m_height)};
     
-    //still need to calculate and interpolate z value
-
-    if (std::abs(p2.position(0) - p1.position(0)) > std::abs(p2.position(1) - p1.position(1))) {
-        //Line is more horizontal than vertical
-        if (p1.position(0) > p2.position(0)) {
-            Maths::swap(p1.position, p2.position);
-            Maths::swap(point1, point2);
+    int xMin{ arr[0] };
+    int xMax{ arr[0] };
+    int yMin{ arr[3] };
+    int yMax{ arr[3] };
+    
+    for (std::size_t i{1};i<3 ;i++) {
+        if (arr[i] < xMin) {
+            xMin = arr[i];
         }
-        std::vector<float> positions{ Maths::Interpolate(point1.x, point2.x, p1.position(1) * m_height, p2.position(1) * m_height)};
-
-        float zGradient{(point2.z-point1.z) / positions.size()}; //same as changing per x coord increase
-
-        for (int i{ 0 }; i < (point2.x - point1.x); i++) {
-            this->drawPixel(Maths::RasterPoint{ i + point1.x, static_cast<int>(positions[i]), point1.z + zGradient * i }, colour);
+        else if (arr[i] > xMax) {
+            xMax = arr[i];
         }
     }
-    else {
-        //Line is more vertical than horizontal
-        if (p1.position(1) > p2.position(1)) {
-            Maths::swap(p1.position, p2.position);
-            Maths::swap(point1, point2);
+    for (std::size_t i{ 4 };i < 6;i++) {
+        if (arr[i] < yMin) {
+            yMin = arr[i];
         }
-        std::vector<float> positions{ Maths::Interpolate(point1.y, point2.y, p1.position(0) * m_width, p2.position(0) * m_width) };
-        
-        float zGradient{ (point2.z - point1.z) / positions.size() }; //same as changing per x coord increase
-
-        for (int i{ 0 }; i < (point2.y - point1.y); i++) {
-            this->drawPixel(Maths::RasterPoint{ static_cast<int>(positions[i]), i + point1.y, point1.z + zGradient * i }, colour);
+        else if (arr[i] > yMax) {
+            yMax = arr[i];
         }
     }
     
-}
-
-void Rasteriser::drawTriangle(Maths::Vertex p1, Maths::Vertex p2, Maths::Vertex p3, bool wireframe, std::uint32_t colour) {
+    p1.position(0) *= m_width;
+    p1.position(1) *= m_height;
+    p2.position(0) *= m_width;
+    p2.position(1) *= m_height;
+    p3.position(0) *= m_width;
+    p3.position(1) *= m_height;
     
-    //////////////////////////////////////////////////////// this also needs to be changed likely maybe idk
-    if (wireframe) {
-        this->drawLine(p1, p2, colour);
-        this->drawLine(p1, p3, colour);
-        this->drawLine(p2, p3, colour);
-    }
-    ////////////////////////////////////////////////////////
-    else {
-
-        std::array<int, 6> arr{ 
-            static_cast<int>(p1.position(0) * m_width), 
-            static_cast<int>(p2.position(0) * m_width),
-            static_cast<int>(p3.position(0) * m_width),
-            static_cast<int>(p1.position(1) * m_height),
-            static_cast<int>(p2.position(1) * m_height),
-            static_cast<int>(p3.position(1) * m_height)};
-
-        int xMin{ arr[0] };
-        int xMax{ arr[0] };
-        int yMin{ arr[3] };
-        int yMax{ arr[3] };
-
-        for (std::size_t i{1};i<3 ;i++) {
-            if (arr[i] < xMin) {
-                xMin = arr[i];
-            }
-            else if (arr[i] > xMax) {
-                xMax = arr[i];
-            }
-        }
-        for (std::size_t i{ 4 };i < 6;i++) {
-            if (arr[i] < yMin) {
-                yMin = arr[i];
-            }
-            else if (arr[i] > yMax) {
-                yMax = arr[i];
-            }
-        }
-
-        p1.position(0) *= m_width;
-        p1.position(1) *= m_height;
-        p2.position(0) *= m_width;
-        p2.position(1) *= m_height;
-        p3.position(0) *= m_width;
-        p3.position(1) *= m_height;
-
-        float edge1,edge2,edge3;
-        float area{ Maths::edgeFunction(p1.position,p2.position,p3.position)};
-
-        float z;
-
-        //we precalculate parts of z, as it reduces the amount of operations needed for baryocentric coordinate calculations
-        //this should be done for all vertex attributes
-        float tempZ1{ 1/p1.position(2) };
-        float tempZ2{ 1/p2.position(2) - 1/p1.position(2) };
-        float tempZ3{ 1/p3.position(2) - 1/p1.position(2) };
-        
-        //precalculate edge function and incrememnt it by a step, this means we only have to do
-        //a singular addition instead of recalculating the edge function for each pixel
-        //essentially we're just linearly interprolating and adding it up
-
-        float preEdge1{ Maths::edgeFunction(p1.position, p2.position, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
-        float xStepEdge1{ p2.position(1) - p1.position(1) };
-        float yStepEdge1{ p1.position(0) - p2.position(0) };
-
-        float preEdge2{ Maths::edgeFunction(p2.position, p3.position, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
-        float xStepEdge2{ p3.position(1) - p2.position(1) };
-        float yStepEdge2{ p2.position(0) - p3.position(0) };
-
-        float preEdge3{ Maths::edgeFunction(p3.position, p1.position, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
-        float xStepEdge3{ p1.position(1) - p3.position(1) };
-        float yStepEdge3{ p3.position(0) - p1.position(0) };
-
-        float tempEdge1;
-        float tempEdge2;
-        float tempEdge3;
-
-        int yCounter{ 0 };
-
-
-        for (int y{ yMin }; y <= yMax; y++) {
-
-            edge1 = preEdge1 + yStepEdge1 * yCounter;
-            edge2 = preEdge2 + yStepEdge2 * yCounter;
-            edge3 = preEdge3 + yStepEdge3 * yCounter;
+    float edge1,edge2,edge3;
+    float area{ Maths::edgeFunction(p1.position,p2.position,p3.position)};
     
-            for (int x{ xMin }; x <= xMax; x++) {
+    float z, texX, texY;
+    
+    //we precalculate parts of z, as it reduces the amount of operations needed for baryocentric coordinate calculations
+    //this should be done for all vertex attributes
+    float tempZ1{ p1.invW };
+    float tempZ2{ p2.invW - tempZ1 };
+    float tempZ3{ p3.invW - tempZ1 };
+    
+    float tempTexX1{ p1.texCoord(0) * p1.invW };
+    float tempTexX2{ p2.texCoord(0) * p2.invW - tempTexX1 };
+    float tempTexX3{ p3.texCoord(0) * p3.invW - tempTexX1 };
 
-                //check if pixel is within the triangle
-                edge1 += xStepEdge1;
-                edge2 += xStepEdge2;
-                edge3 += xStepEdge3;
+    float tempTexY1{ p1.texCoord(1) * p1.invW };
+    float tempTexY2{ p2.texCoord(1) * p2.invW - tempTexY1 };
+    float tempTexY3{ p3.texCoord(1) * p3.invW - tempTexY1 };
+    
+    
+    //precalculate edge function and incrememnt it by a step, this means we only have to do
+    //a singular addition instead of recalculating the edge function for each pixel
+    //essentially we're just linearly interprolating and adding it up
+    
+    float preEdge1{ Maths::edgeFunction(p1.position, p2.position, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
+    float xStepEdge1{ p2.position(1) - p1.position(1) };
+    float yStepEdge1{ p1.position(0) - p2.position(0) };
+    
+    float preEdge2{ Maths::edgeFunction(p2.position, p3.position, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
+    float xStepEdge2{ p3.position(1) - p2.position(1) };
+    float yStepEdge2{ p2.position(0) - p3.position(0) };
+    
+    float preEdge3{ Maths::edgeFunction(p3.position, p1.position, static_cast<float>(xMin) + 0.5f, static_cast<float>(yMin) + 0.5f) };
+    float xStepEdge3{ p1.position(1) - p3.position(1) };
+    float yStepEdge3{ p3.position(0) - p1.position(0) };
+    
+    float bary2;
+    float bary3;
+    float bary1;
 
-                if (edge1 >= 0 && edge2 >= 0 && edge3 >= 0) {
-                    //calculate barycentric coords
-                    tempEdge1 = edge1 / area;
-                    tempEdge2 = edge2 / area;
-                    tempEdge3 = edge3 / area;
-                    
-                    //use barycentric coords to find z(can also be used for vertex attributes like colours,normals or texture maps)
-                    //note that we calculate the inverse as projective transformations don't preserve distance
+    float invZ;
+    
+    int yCounter{ 0 };
+    
+    for (int y{ yMin }; y <= yMax; y++) {
+    
+        edge1 = preEdge1 + yStepEdge1 * yCounter;
+        edge2 = preEdge2 + yStepEdge2 * yCounter;
+        edge3 = preEdge3 + yStepEdge3 * yCounter;
+    
+        for (int x{ xMin }; x <= xMax; x++) {
+ 
+            //check if pixel is within the triangle
+    
+            if (edge1 < 0 && edge2 < 0 && edge3 < 0) {
+                //calculate barycentric coords
+                bary1 = edge2 / area;
+                bary2 = edge3 / area;
+                bary3 = edge1 / area;
+    
+                //use barycentric coords to find z(can also be used for vertex attributes like colours,normals or texture maps)
+                //note that we calculate the inverse as projective transformations don't preserve distance
+                
+                invZ = (tempZ1 + bary2 * tempZ2 + bary3 * tempZ3);
 
-                    //z = 1 / ((1 / (p1(2))) * edge1 + (1 / (p2(2))) * edge2 + (1 / (p3(2))) * edge3); naive calculation
-                    z = 1 / (tempZ1 + edge2 * tempZ2 + edge3 * tempZ3);
+                texX = (tempTexX1 + bary2 * tempTexX2 + bary3 * tempTexX3) / invZ;
+                texY = (tempTexY1 + bary2 * tempTexY2 + bary3 * tempTexY3) / invZ;
+                z = 1 / invZ;
 
-                    drawPixel(Maths::RasterPoint{ x,y,z }, colour);
-                    
-                }
-                else if (edge1 < 0 && edge2 < 0 && edge3 < 0) {
-                    //calculate barycentric coords
-                    tempEdge1 = edge1 / area;
-                    tempEdge2 = edge2 / area;
-                    tempEdge3 = edge3 / area;
-
-                    //use barycentric coords to find z(can also be used for vertex attributes like colours,normals or texture maps)
-                    //note that we calculate the inverse as projective transformations don't preserve distance
-                    
-                    //z = 1 / ((1 / (p1(2))) * edge1 + (1 / (p2(2))) * edge2 + (1 / (p3(2))) * edge3); naive calculation
-                    z = 1 / (tempZ1 + edge2 * tempZ2 + edge3 * tempZ3);
-
-                    drawPixel(Maths::RasterPoint{ x,y,z }, colour);
-
-                }
-
+                drawPixel(Maths::RasterPoint{ x,y,z }, texture.getTex(Maths::Vec2f{ texX,texY }));
             }
 
-            yCounter++;
-
+            edge1 += xStepEdge1;
+            edge2 += xStepEdge2;
+            edge3 += xStepEdge3;
+    
         }
+    
+        yCounter++;
+    
     }
 }
 
-void Rasteriser::drawObject(Object& object, bool wireframe) {
+void Rasteriser::drawObject(Object& object) {
 
     // setup
     //////////////////////////////////////////////// STEP 1: CREATE MODEL-VIEW-PROJECTION MATRIX
@@ -267,9 +219,9 @@ void Rasteriser::drawObject(Object& object, bool wireframe) {
     Maths::Vec2f textureVert2;
     Maths::Vec2f textureVert3;
 
-    double w1{};
-    double w2{};
-    double w3{};
+    float w1{};
+    float w2{};
+    float w3{};
 
     const Mesh& mesh = object.getMesh();
 
@@ -358,19 +310,22 @@ void Rasteriser::drawObject(Object& object, bool wireframe) {
             Maths::Vertex{
             Maths::Vec3f{(positionVert1(0) + 1) / 2, (positionVert1(1) + 1) / 2, positionVert1(2)},
             Maths::Vec3f{normalVert1(0),normalVert1(1),normalVert1(2)},
-            Maths::Vec2f{textureVert1(0),textureVert1(1)} },
+            Maths::Vec2f{textureVert1(0),textureVert1(1)},
+            1 / w1},
 
             Maths::Vertex{
             Maths::Vec3f{(positionVert2(0) + 1) / 2, (positionVert2(1) + 1) / 2, positionVert2(2)},
             Maths::Vec3f{normalVert2(0),normalVert2(1),normalVert2(2)},
-            Maths::Vec2f{textureVert2(0),textureVert2(1)} },
+            Maths::Vec2f{textureVert2(0),textureVert2(1)},
+            1 / w2},
 
             Maths::Vertex{
             Maths::Vec3f{(positionVert3(0) + 1) / 2, (positionVert3(1) + 1) / 2, positionVert3(2)},
             Maths::Vec3f{normalVert3(0),normalVert3(1),normalVert3(2)},
-            Maths::Vec2f{textureVert3(0),textureVert3(1)} },
+            Maths::Vec2f{textureVert3(0),textureVert3(1)},
+            1 / w3},
 
-            wireframe);
+            object.getTexture());
     }    
 }
 
